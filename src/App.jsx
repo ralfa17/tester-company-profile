@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-// Icon
+// Icon SVG
 const HeartHandshakeIcon = () => (
   <svg className="w-6 h-6 text-[#701A24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -25,9 +25,21 @@ const CheckIcon = () => (
   </svg>
 );
 
+// Ikon Avatar Pengganti Foto Tim Psikolog
+const PersonAvatarIcon = () => (
+  <svg className="w-16 h-16 text-[#701A24]/40" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+  </svg>
+);
+
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
+
+  // Link WhatsApp Langsung dengan Pesan Otomatis
+  const waNumber = "6289529967266";
+  const waMessage = encodeURIComponent("Halo Benang Merah, saya ingin berkonsultasi mengenai layanan konseling.");
+  const waUrl = `https://wa.me/${waNumber}?text=${waMessage}`;
 
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -54,20 +66,19 @@ export default function App() {
     }
   ];
 
+  // Data Psikolog tanpa Foto (Menggunakan Ikon Avatar)
   const psychologists = [
     {
-      name: "Siti Rahma, M.Psi., Psikolog",
+      name: "Mr. ABCD",
       role: "Psikolog Klinis Dewasa",
-      license: "SIPP: 1234/SIPP/2024",
+      license: "SIPP: Nomor SIPP Resmi",
       spec: "Spesialisasi: Kecemasan, Depresi & Trauma",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600"
     },
     {
-      name: "Budi Santoso, M.Psi., Psikolog",
-      role: "Psikolog Hubungan & Keluarga",
-      license: "SIPP: 5678/SIPP/2024",
-      spec: "Spesialisasi: Konseling Pasangan & Burnout",
-      image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600"
+      name: "Mrs. ABCD",
+      role: "Psikolog Anak",
+      license: "SIPP: Nomor SIPP Resmi",
+      spec: "Spesialisasi: Tumbuh Kembang Anak, Emosi Anak, Trauma Anak",
     }
   ];
 
@@ -93,6 +104,7 @@ export default function App() {
       <nav className="sticky top-0 z-50 bg-[#FDFBF7]/90 backdrop-blur-md border-b border-[#E2E8F0]">
         <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* Logo Love seperti kodingan awal */}
             <div className="w-10 h-10 rounded-full bg-[#701A24]/10 flex items-center justify-center">
               <HeartHandshakeIcon />
             </div>
@@ -110,7 +122,7 @@ export default function App() {
 
           <div className="hidden md:block">
             <a 
-              href="https://wa.me/" 
+              href={waUrl}
               target="_blank" 
               rel="noreferrer"
               className="bg-[#701A24] hover:bg-[#54121B] text-white px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm hover:shadow"
@@ -134,7 +146,7 @@ export default function App() {
             <a href="#psikolog" onClick={() => setIsMenuOpen(false)}>Tim Psikolog</a>
             <a href="#faq" onClick={() => setIsMenuOpen(false)}>FAQ</a>
             <a 
-              href="https://wa.me/" 
+              href={waUrl} 
               target="_blank" 
               rel="noreferrer"
               className="bg-[#701A24] text-white text-center py-2.5 rounded-full font-medium"
@@ -160,7 +172,7 @@ export default function App() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a 
-                href="https://wa.me/" 
+                href={waUrl}
                 target="_blank" 
                 rel="noreferrer"
                 className="bg-[#701A24] hover:bg-[#54121B] text-white px-7 py-3.5 rounded-full font-medium text-center transition-all shadow-md hover:shadow-lg"
@@ -196,7 +208,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* reting kepercayaan */}
+      {/* RATING KEPERCAYAAN */}
       <section className="bg-white border-y border-[#E2E8F0] py-12 px-6">
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <div>
@@ -218,7 +230,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* service layer */}
+      {/* SERVICE LAYER */}
       <section id="layanan" className="py-20 px-6 max-w-6xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <h2 className="font-serif text-3xl md:text-4xl text-[#1E293B] mb-4">Layanan Konseling Kami</h2>
@@ -251,7 +263,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* step by step */}
+      {/* STEP BY STEP */}
       <section className="bg-[#F4F1EA] py-20 px-6 border-y border-[#E2E8F0]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-16">
@@ -276,7 +288,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* tim profesional */}
+      {/* TIM PROFESIONAL (Model Avatar Tanpa Foto) */}
       <section id="psikolog" className="py-20 px-6 max-w-6xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <h2 className="font-serif text-3xl md:text-4xl text-[#1E293B] mb-4">Tim Psikolog Profesional</h2>
@@ -287,12 +299,14 @@ export default function App() {
 
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {psychologists.map((p, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden flex flex-col sm:flex-row shadow-sm">
-              <img src={p.image} alt={p.name} className="w-full sm:w-48 h-56 object-cover" />
-              <div className="p-6 flex flex-col justify-center">
+            <div key={i} className="bg-white rounded-2xl border border-[#E2E8F0] p-6 flex items-center gap-6 shadow-sm hover:shadow-md transition-all">
+              <div className="w-24 h-24 rounded-full bg-[#701A24]/5 border border-[#701A24]/10 flex items-center justify-center shrink-0">
+                <PersonAvatarIcon />
+              </div>
+              <div className="flex flex-col justify-center">
                 <h3 className="font-serif text-lg font-medium text-[#1E293B]">{p.name}</h3>
-                <p className="text-[#701A24] text-xs font-semibold mt-1 mb-2">{p.role}</p>
-                <p className="text-[#94A3B8] text-xs mb-3">{p.license}</p>
+                <p className="text-[#701A24] text-xs font-semibold mt-1 mb-1">{p.role}</p>
+                <p className="text-[#94A3B8] text-xs mb-2">{p.license}</p>
                 <p className="text-[#64748B] text-xs font-light">{p.spec}</p>
               </div>
             </div>
@@ -330,10 +344,11 @@ export default function App() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-[#1E293B] text-slate-300 py-16 px-6">
+      <footer className="bg-[#111827] text-slate-300 py-16 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10 border-b border-slate-700 pb-12 mb-8">
           <div>
             <div className="flex items-center gap-3 mb-4">
+              {/* Logo Love di Footer */}
               <HeartHandshakeIcon />
               <span className="font-serif text-xl font-bold text-white">Benang Merah</span>
             </div>
@@ -345,7 +360,7 @@ export default function App() {
           <div className="space-y-3 text-xs">
             <p className="font-semibold text-white uppercase tracking-wider mb-2">Kontak Klinik</p>
             <p className="text-slate-400">📍 Jl. Ir. Soekarno No. 1, Talun, Cirebon</p>
-            <p className="text-slate-400">📞 +62 888-629-2665</p>
+            <p className="text-slate-400">📞 +62 89-529-967-266</p>
             <p className="text-slate-400">✉️ benangmerah305@gmail.com</p>
           </div>
 
