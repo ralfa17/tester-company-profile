@@ -23,7 +23,7 @@ export default defineConfig({
           // Konfigurasi ini memberitahu PWA untuk memakai bm.png untuk semua ukuran
           {
             src: '/bm.png',
-            sizes: '192x192 512x512', // Cukup cantumkan ukuran yang diminta
+            sizes: '512x512', // Cukup cantumkan ukuran yang diminta
             type: 'image/png',
             purpose: 'any maskable' // Tambahkan 'maskable' agar ikon bagus di Android
           }
