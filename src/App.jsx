@@ -37,7 +37,7 @@ export default function App() {
   const [openFaq, setOpenFaq] = useState(null);
 
   // Link WhatsApp Langsung dengan Pesan Otomatis
-  const waNumber = "6289529967266";
+  const waNumber = "6282298585310";
   const waMessage = encodeURIComponent("Halo Benang Merah, saya ingin berkonsultasi mengenai layanan konseling.");
   const waUrl = `https://wa.me/${waNumber}?text=${waMessage}`;
 
