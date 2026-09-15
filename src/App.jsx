@@ -474,14 +474,14 @@ export default function App() {
 
           <div className="space-y-3 text-xs">
             <p className="font-semibold text-white uppercase tracking-wider mb-2">Kontak Klinik</p>
-            <p className="text-slate-400">📍 Jl. Ir. Soekarno No. 1, Talun, Cirebon</p>
-            <p className="text-slate-400">📞 +62 89-529-967-266</p>
-            <p className="text-slate-400">✉️ benangmerah305@gmail.com</p>
+            <p className="text-slate-400">📍 Perumahan Nuansa Majasem, Jl. Bandung, No. B9/16. </p>
+            <p className="text-slate-400">📞 0822-9858-5310</p>
+            <p className="text-slate-400">✉️ benangmerahpsy@gmail.com</p>
           </div>
 
           <div className="space-y-3 text-xs">
             <p className="font-semibold text-white uppercase tracking-wider mb-2">Jam Operasional</p>
-            <p className="text-slate-400">🕒 Senin - Jumat: 08.00 - 17.00 WIB</p>
+            <p className="text-slate-400">🕒 Senin - Sabtu : 08.00 - 17.00 WIB</p>
             <p className="text-slate-500 italic mt-2">*Konseling dilakukan dengan perjanjian terlebih dahulu.</p>
           </div>
         </div>
