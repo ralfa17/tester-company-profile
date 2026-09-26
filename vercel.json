@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd \"company-profile/benang merah\" && npm run build",
+  "outputDirectory": "company-profile/benang merah/dist",
+  "framework": "vite"
+}
