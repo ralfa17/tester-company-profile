@@ -64,11 +64,9 @@ export default function App() {
     if (!currentSession) return;
     
     try {
-      // Hitung total profiles yang ada
       const { data: profiles, error } = await supabase.from('profiles').select('id');
       if (error) throw error;
 
-      // Cek apakah user saat ini terdaftar dalam 7 orang pertama
       const isRegisteredUser = profiles.some(p => p.id === currentSession.user.id);
 
       if (!isRegisteredUser && profiles.length >= 7) {
@@ -992,7 +990,7 @@ export default function App() {
       {showLoginModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-            <button 
+            <button
               onClick={() => setShowLoginModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold"
             >

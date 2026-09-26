@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import Auth from './components/Auth';
 
-// Icon SVG
+// Icon SVG Components
 const HeartHandshakeIcon = () => (
   <svg className="w-6 h-6 text-[#701A24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -197,6 +197,9 @@ export default function App() {
       if (error) throw error;
       alert("Rekam medis & rujukan berhasil disimpan!");
       setShowMedicalModal(false);
+      setAssessmentNotes('');
+      setDiagnosis('');
+      setReferToTherapist('');
       fetchAppointments();
     } catch (err) {
       alert(`Gagal menyimpan: ${err.message}`);
@@ -217,6 +220,7 @@ export default function App() {
       if (error) throw error;
       alert("Catatan perkembangan terapis berhasil disimpan!");
       setShowTherapyModal(false);
+      setTherapyProgress('');
       fetchAppointments();
     } catch (err) {
       alert(`Gagal menyimpan: ${err.message}`);
@@ -651,7 +655,7 @@ export default function App() {
                               </button>
                             )}
 
-                            {/* 2. TOMBOL KHUSUS TERAPIS (HANYA MUNCUL JIKA PASIEN SUDAH DIRUJUK OLEH PSIKOLOG) */}
+                            {/* 2. TOMBOL KHUSUS TERAPIS */}
                             {userRole === 'terapis' && (
                               item.assigned_terapis ? (
                                 <button
@@ -1233,7 +1237,7 @@ export default function App() {
 
           <div className="space-y-3 text-xs">
             <p className="font-semibold text-white uppercase tracking-wider mb-2">Kontak Klinik</p>
-            <p className="text-slate-400">📍 Perumahan Nuansa Majasem, Jl. Bandung, No. B9/16. </p>
+            <p className="text-slate-400">📍 Perumahan Nuansa Majasem, Jl. Bandung, No. B9/16.</p>
             <p className="text-slate-400">📞 0822-9858-5310</p>
             <p className="text-slate-400">✉️ benangmerahpsy@gmail.com</p>
           </div>
