@@ -303,14 +303,14 @@ export default function App() {
       role: "FOUNDER & PSIKOLOG KLINIS ANAK - REMAJA",
       license: "SIPP Resmi",
       spec: "Fokus mendampingi tumbuh kembang anak, pengasuhan remaja, serta asesmen psikologi pendidikan dan perilaku.",
-      image: "/Azka Maulana.jpeg"
+      image: "/azka.jpeg"
     },
     {
       name: "Sofia Halida Fatma, M.Psi., Psikolog",
       role: "CO-FOUNDER & PSIKOLOG KLINIS DEWASA",
       license: "SIPP Resmi",
       spec: "Ahli dalam konseling kesehatan mental dewasa, manajemen stres & kecemasan, hubungan interpersonal, serta pemulihan trauma.",
-      image: "/Sofia Halida.jpeg"
+      image: "/sofia.jpeg"
     }
   ];
 
