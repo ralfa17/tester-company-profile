@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'bm.png', 'robots.txt'],
+      includeAssets: ['favicon.svg', 'logo.png', 'robots.txt'],
       manifest: {
         name: 'Klinik Psikologi Benang Merah',
         short_name: 'Benang Merah',
@@ -19,12 +19,12 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/bm.png',
+            src: '/logo.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/bm.png',
+            src: '/logo.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
@@ -36,7 +36,7 @@ export default defineConfig({
             short_name: 'RekamMedis',
             description: 'Buka langsung menu rekam medis',
             url: '/',
-            icons: [{ src: '/bm.png', sizes: '192x192' }]
+            icons: [{ src: '/logo.png', sizes: '192x192' }]
           }
         ]
       },
