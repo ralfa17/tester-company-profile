@@ -64,7 +64,8 @@ export default function App() {
   // State Form Input Pasien Baru (Admin)
   const [patientName, setPatientName] = useState('');
   const [patientPhone, setPatientPhone] = useState('');
-  const [serviceType, setServiceType] = useState('assessment');
+  const [patientAge, setPatientAge] = useState('');
+  const [visitNumber, setVisitNumber] = useState(1);
   const [assignedPsychologist, setAssignedPsychologist] = useState(LIST_PSIKOLOG[0]);
   const [bookingDate, setBookingDate] = useState('');
   const [bookingTime, setBookingTime] = useState('09:00');
@@ -78,6 +79,7 @@ export default function App() {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
 
   // Form Rekam Medis Psikolog
+  const [serviceType, setServiceType] = useState('assessment');
   const [assessmentNotes, setAssessmentNotes] = useState('');
   const [diagnosis, setDiagnosis] = useState('');
   const [referToTherapist, setReferToTherapist] = useState('');
@@ -149,20 +151,19 @@ export default function App() {
     setSubmitting(true);
     setBookingMsg('');
 
-    const basePrice = tarifs[serviceType] || 300000;
-    const totalPrice = basePrice + Number(adminFeeInput);
-
     try {
       const { error } = await supabase.from('appointments').insert([
         {
-          category: serviceType,
+          patient_name: patientName,
           doctor_name: assignedPsychologist,
           assigned_to: assignedPsychologist,
           booking_date: bookingDate,
           booking_time: bookingTime,
           status: 'pending',
           notes: `[Klien: ${patientName} - HP: ${patientPhone}]`,
-          price: totalPrice,
+          age: parseInt(patientAge) || 0,
+          visit_number: parseInt(visitNumber) || 1,
+          price: Number(adminFeeInput),
           admin_fee: Number(adminFeeInput)
         },
       ]);
@@ -172,6 +173,8 @@ export default function App() {
       fetchAppointments();
       setPatientName('');
       setPatientPhone('');
+      setPatientAge('');
+      setVisitNumber(1);
     } catch (err) {
       setBookingMsg(`Gagal: ${err.message}`);
     } finally {
@@ -183,6 +186,9 @@ export default function App() {
   const handleSavePsychologistRecord = async () => {
     if (!selectedAppt) return;
     try {
+      const basePrice = tarifs[serviceType] || 300000;
+      const totalPrice = basePrice + Number(selectedAppt.admin_fee || 50000);
+
       const medicalLog = `[ASSESSMENT & DIAGNOSA PSIKOLOG]\n` +
         `Catatan: ${assessmentNotes}\n` +
         `Diagnosa: ${diagnosis}\n` +
@@ -191,7 +197,10 @@ export default function App() {
       const { error } = await supabase.from('appointments').update({
         notes: `${selectedAppt.notes}\n\n${medicalLog}`,
         status: referToTherapist ? 'dirujuk_terapis' : 'selesai_konseling',
-        assigned_terapis: referToTherapist || null
+        assigned_terapis: referToTherapist || null,
+        service_type: serviceType,
+        category: serviceType,
+        price: totalPrice
       }).eq('id', selectedAppt.id);
 
       if (error) throw error;
@@ -273,6 +282,9 @@ export default function App() {
             <tr>
               <th>Tanggal</th>
               <th>Jam</th>
+              <th>Nama Pasien</th>
+              <th>Usia</th>
+              <th>Kunjungan Ke-</th>
               <th>Layanan</th>
               <th>Psikolog PJ</th>
               <th>Terapis (Rujukan)</th>
@@ -289,11 +301,14 @@ export default function App() {
         <tr>
           <td>${item.booking_date || '-'}</td>
           <td>${item.booking_time || '-'}</td>
-          <td>${(item.category || '-').toUpperCase()}</td>
+          <td>${item.patient_name || '-'}</td>
+          <td>${item.age ? item.age + ' Thn' : '-'}</td>
+          <td>${item.visit_number || 1}</td>
+          <td>${(item.service_type || item.category || 'Belum diisi Psikolog').toUpperCase()}</td>
           <td>${item.doctor_name || '-'}</td>
           <td>${item.assigned_terapis || 'Tidak Ada'}</td>
           <td>${(item.notes || '-').replace(/\n/g, ' ')}</td>
-          <td>Rp ${(item.price || 350000).toLocaleString('id-ID')}</td>
+          <td>Rp ${(item.price || 50000).toLocaleString('id-ID')}</td>
           <td>${(item.status || 'pending').toUpperCase()}</td>
         </tr>
       `;
@@ -505,20 +520,32 @@ export default function App() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block font-medium text-gray-600 mb-1">Metode / Layanan</label>
-                      <select
-                        value={serviceType}
-                        onChange={(e) => setServiceType(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-[#701A24]"
-                      >
-                        <option value="assessment">Assessment / Intake Interview (Rp 300rb)</option>
-                        <option value="konseling">Konseling Individu (Rp 300rb)</option>
-                        <option value="psikoterapi">Psikoterapi (Rp 400rb)</option>
-                        <option value="terapi_anak">Terapi Anak (Rp 150rb)</option>
-                        <option value="couple">Konseling Pasangan (Rp 600rb)</option>
-                        <option value="keluarga">Konseling Keluarga (Rp 700rb)</option>
-                      </select>
+                    {/* INPUT USIA PASIEN & KUNJUNGAN KE- */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block font-medium text-gray-600 mb-1">Usia (Tahun)</label>
+                        <input
+                          type="number"
+                          required
+                          min="0"
+                          placeholder="Contoh: 25"
+                          value={patientAge}
+                          onChange={(e) => setPatientAge(e.target.value)}
+                          className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-[#701A24]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-medium text-gray-600 mb-1">Kunjungan Ke-</label>
+                        <input
+                          type="number"
+                          required
+                          min="1"
+                          placeholder="1"
+                          value={visitNumber}
+                          onChange={(e) => setVisitNumber(e.target.value)}
+                          className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-[#701A24]"
+                        />
+                      </div>
                     </div>
 
                     <div>
@@ -609,7 +636,7 @@ export default function App() {
                   <table className="w-full text-left text-xs text-gray-600 border-collapse">
                     <thead className="bg-gray-50 text-gray-700 font-semibold border-b">
                       <tr>
-                        <th className="p-3 border-b">Jadwal & Layanan</th>
+                        <th className="p-3 border-b">Jadwal & Pasien</th>
                         <th className="p-3 border-b">Psikolog PJ</th>
                         <th className="p-3 border-b">Rujukan Terapis</th>
                         <th className="p-3 border-b">Catatan Rekam Medis</th>
@@ -621,11 +648,20 @@ export default function App() {
                         <tr key={item.id} className="hover:bg-gray-50 transition">
                           <td className="p-3">
                             <p className="font-medium text-gray-800">{item.booking_date} ({item.booking_time})</p>
-                            <span className="text-[10px] bg-red-50 text-[#701A24] font-semibold px-2 py-0.5 rounded capitalize">
-                              {item.category}
-                            </span>
+                            <p className="font-semibold text-gray-900 mt-0.5">{item.patient_name}</p>
+                            
+                            {/* Tampilan Usia dan Kunjungan di Tabel */}
+                            <div className="flex items-center gap-1 mt-1">
+                              <span className="text-[10px] bg-gray-100 text-gray-600 font-medium px-1.5 py-0.5 rounded">
+                                {item.age ? `${item.age} Thn` : 'Usia -'}
+                              </span>
+                              <span className="text-[10px] bg-red-50 text-[#701A24] font-semibold px-1.5 py-0.5 rounded">
+                                Kunjungan Ke-{item.visit_number || 1}
+                              </span>
+                            </div>
+
                             <p className="text-[11px] text-green-700 font-semibold mt-1">
-                              Biaya: Rp {(item.price || 350000).toLocaleString('id-ID')}
+                              Biaya Admin: Rp {(item.admin_fee || 50000).toLocaleString('id-ID')}
                             </p>
                           </td>
                           <td className="p-3 font-medium text-gray-800">{item.doctor_name}</td>
@@ -639,7 +675,13 @@ export default function App() {
                             )}
                           </td>
                           <td className="p-3 text-gray-700 whitespace-pre-line max-w-xs text-[11px] leading-relaxed">
-                            {item.notes || '-'}
+                            {/* Menampilkan Layanan jika sudah diisi oleh Psikolog */}
+                            {(item.service_type || item.category) && (
+                              <span className="inline-block bg-purple-50 text-purple-700 font-semibold px-2 py-0.5 rounded text-[10px] mb-1 capitalize">
+                                Layanan: {item.service_type || item.category}
+                              </span>
+                            )}
+                            <p>{item.notes || '-'}</p>
                           </td>
                           <td className="p-3 text-center space-y-1.5">
                             {/* 1. TOMBOL KHUSUS PSIKOLOG */}
@@ -700,6 +742,7 @@ export default function App() {
               )}
             </div>
           </div>
+
         </main>
 
         {/* MODAL 1: INPUT REKAM MEDIS & RUJUKAN (PSIKOLOG) */}
@@ -713,8 +756,25 @@ export default function App() {
 
               <div className="space-y-3 text-xs">
                 <p className="bg-gray-50 p-2.5 rounded text-gray-700">
-                  <span className="font-bold">Pasien:</span> {selectedAppt.notes}
+                  <span className="font-bold">Pasien:</span> {selectedAppt.patient_name || selectedAppt.notes}
                 </p>
+
+                {/* PENENTUAN METODE / LAYANAN OLEH PSIKOLOG */}
+                <div>
+                  <label className="block font-semibold mb-1 text-gray-700">Metode / Layanan Konseling</label>
+                  <select
+                    value={serviceType}
+                    onChange={(e) => setServiceType(e.target.value)}
+                    className="w-full p-2.5 border rounded-lg outline-none font-medium"
+                  >
+                    <option value="assessment">Assessment / Intake Interview (Rp 300rb)</option>
+                    <option value="konseling">Konseling Individu (Rp 300rb)</option>
+                    <option value="psikoterapi">Psikoterapi (Rp 400rb)</option>
+                    <option value="terapi_anak">Terapi Anak (Rp 150rb)</option>
+                    <option value="couple">Konseling Pasangan (Rp 600rb)</option>
+                    <option value="keluarga">Konseling Keluarga (Rp 700rb)</option>
+                  </select>
+                </div>
 
                 <div>
                   <label className="block font-semibold mb-1 text-gray-700">Assessment / Intake Interview Notes</label>
@@ -820,8 +880,8 @@ export default function App() {
 
                 <div className="space-y-1 text-[11px]">
                   <p><span className="text-gray-500">Tanggal:</span> {selectedAppt.booking_date} ({selectedAppt.booking_time})</p>
-                  <p><span className="text-gray-500">Klien/Pasien:</span> {selectedAppt.notes.split(']')[0]?.replace('[', '')}</p>
-                  <p><span className="text-gray-500">Layanan:</span> {selectedAppt.category.toUpperCase()}</p>
+                  <p><span className="text-gray-500">Klien/Pasien:</span> {selectedAppt.patient_name || selectedAppt.notes}</p>
+                  <p><span className="text-gray-500">Layanan:</span> {(selectedAppt.service_type || selectedAppt.category || 'Terlampir').toUpperCase()}</p>
                   <p><span className="text-gray-500">Psikolog PJ:</span> {selectedAppt.doctor_name}</p>
                   {selectedAppt.assigned_terapis && (
                     <p><span className="text-gray-500">Terapis:</span> {selectedAppt.assigned_terapis}</p>
@@ -831,7 +891,7 @@ export default function App() {
                 <div className="border-t border-b py-2 space-y-1">
                   <div className="flex justify-between">
                     <span>Biaya Layanan/Sesi:</span>
-                    <span>Rp {((selectedAppt.price || 350000) - (selectedAppt.admin_fee || 50000)).toLocaleString('id-ID')}</span>
+                    <span>Rp {((selectedAppt.price || 50000) - (selectedAppt.admin_fee || 50000)).toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Biaya Administrasi:</span>
@@ -839,7 +899,7 @@ export default function App() {
                   </div>
                   <div className="flex justify-between font-bold text-sm text-[#701A24] pt-1 border-t border-dashed">
                     <span>TOTAL BAYAR:</span>
-                    <span>Rp {(selectedAppt.price || 350000).toLocaleString('id-ID')}</span>
+                    <span>Rp {(selectedAppt.price || 50000).toLocaleString('id-ID')}</span>
                   </div>
                 </div>
 
