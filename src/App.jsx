@@ -36,15 +36,38 @@ const PersonAvatarIcon = () => (
 const LIST_PSIKOLOG = ['M. Azka Maulana, M.Psi., Psikolog', 'Sofia Halida Fatma, M.Psi., Psikolog'];
 const LIST_TERAPIS = ['Shima Adinda Salsabil', 'Silviyah Wulandari', 'Nadifa A.M', 'Eka Zahra Nabila Nakhwa'];
 
-const DEFAULT_TARIFS = {
-  assessment: 300000,
-  konseling: 300000,
-  psikoterapi: 400000,
-  terapi_anak: 150000,
-  couple: 600000,
-  keluarga: 700000,
-  admin_fee: 50000
-};
+// Master Rate Card Overtime Sesi Konseling
+const OVERTIME_PASANGAN = [
+  { label: "1 Sesi (60 Menit)", price: 600000 },
+  { label: "1 Jam 15 Menit", price: 750000 },
+  { label: "1 Jam 30 Menit", price: 900000 },
+  { label: "1 Jam 45 Menit", price: 1050000 },
+  { label: "2 Sesi (120 Menit)", price: 1200000 },
+  { label: "2 Jam 15 Menit", price: 1350000 },
+  { label: "2 Jam 30 Menit", price: 1500000 },
+  { label: "2 Jam 45 Menit", price: 1650000 },
+  { label: "3 Sesi (180 Menit)", price: 1800000 },
+  { label: "3 Jam 15 Menit", price: 1950000 },
+  { label: "3 Jam 30 Menit", price: 2100000 },
+  { label: "3 Jam 45 Menit", price: 2250000 },
+  { label: "4 Sesi (240 Menit)", price: 2400000 },
+];
+
+const OVERTIME_ASESMEN = [
+  { label: "1 Sesi (60 Menit)", price: 300000 },
+  { label: "1 Jam 15 Menit", price: 350000 },
+  { label: "1 Jam 30 Menit", price: 450000 },
+  { label: "1 Jam 45 Menit", price: 500000 },
+  { label: "2 Sesi (120 Menit)", price: 600000 },
+  { label: "2 Jam 15 Menit", price: 650000 },
+  { label: "2 Jam 30 Menit", price: 800000 },
+  { label: "2 Jam 45 Menit", price: 850000 },
+  { label: "3 Sesi (180 Menit)", price: 900000 },
+  { label: "3 Jam 15 Menit", price: 950000 },
+  { label: "3 Jam 30 Menit", price: 1100000 },
+  { label: "3 Jam 45 Menit", price: 1150000 },
+  { label: "4 Sesi (240 Menit)", price: 1200000 },
+];
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -58,7 +81,6 @@ export default function App() {
   const [teamAccessDenied, setTeamAccessDenied] = useState(false);
 
   // Master Biaya & Setting Tarif Admin
-  const [tarifs] = useState(DEFAULT_TARIFS);
   const [adminFeeInput, setAdminFeeInput] = useState(50000);
 
   // State Form Input Pasien Baru (Admin)
@@ -78,10 +100,13 @@ export default function App() {
   const [showTherapyModal, setShowTherapyModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
 
-  // Form Rekam Medis Psikolog
+  // Form Rekam Medis Psikolog (Anamnesa, Diagnosa, Rancangan Tindak Lanjut, Durasi Sesi)
   const [serviceType, setServiceType] = useState('assessment');
-  const [assessmentNotes, setAssessmentNotes] = useState('');
+  const [sessionDurationPrice, setSessionDurationPrice] = useState(300000);
+  const [durationLabel, setDurationLabel] = useState('1 Sesi (60 Menit)');
+  const [anamnesaNotes, setAnamnesaNotes] = useState('');
   const [diagnosis, setDiagnosis] = useState('');
+  const [followUpPlan, setFollowUpPlan] = useState('');
   const [referToTherapist, setReferToTherapist] = useState('');
 
   // Form Progress Terapis
@@ -182,32 +207,35 @@ export default function App() {
     }
   };
 
-  // 2. PSIKOLOG: Input Assessment, Diagnosa & Rujukan ke Terapis
+  // 2. PSIKOLOG: Input Anamnesa, Diagnosa, Rancangan Tindak Lanjut & Durasi Sesi
   const handleSavePsychologistRecord = async () => {
     if (!selectedAppt) return;
     try {
-      const basePrice = tarifs[serviceType] || 300000;
-      const totalPrice = basePrice + Number(selectedAppt.admin_fee || 50000);
+      const adminFee = Number(selectedAppt.admin_fee || 50000);
+      const totalPrice = sessionDurationPrice + adminFee;
 
-      const medicalLog = `[ASSESSMENT & DIAGNOSA PSIKOLOG]\n` +
-        `Catatan: ${assessmentNotes}\n` +
-        `Diagnosa: ${diagnosis}\n` +
-        (referToTherapist ? `Rujukan Terapis: ${referToTherapist}` : `Rujukan: Tidak Ada`);
+      const medicalLog = `[REKAM MEDIS PSIKOLOG]\n` +
+        ` Durasi Sesi: ${durationLabel}\n` +
+        ` Anamnesa: ${anamnesaNotes}\n` +
+        ` Diagnosa: ${diagnosis}\n` +
+        ` Rancangan Tindak Lanjut: ${followUpPlan}\n` +
+        (referToTherapist ? ` Rujukan Terapis: ${referToTherapist}` : ` Rujukan: Tidak Ada`);
 
       const { error } = await supabase.from('appointments').update({
         notes: `${selectedAppt.notes}\n\n${medicalLog}`,
         status: referToTherapist ? 'dirujuk_terapis' : 'selesai_konseling',
         assigned_terapis: referToTherapist || null,
-        service_type: serviceType,
+        service_type: `${serviceType} (${durationLabel})`,
         category: serviceType,
         price: totalPrice
       }).eq('id', selectedAppt.id);
 
       if (error) throw error;
-      alert("Rekam medis & rujukan berhasil disimpan!");
+      alert("Rekam medis, durasi sesi & tindak lanjut berhasil disimpan!");
       setShowMedicalModal(false);
-      setAssessmentNotes('');
+      setAnamnesaNotes('');
       setDiagnosis('');
+      setFollowUpPlan('');
       setReferToTherapist('');
       fetchAppointments();
     } catch (err) {
@@ -285,7 +313,7 @@ export default function App() {
               <th>Nama Pasien</th>
               <th>Usia</th>
               <th>Kunjungan Ke-</th>
-              <th>Layanan</th>
+              <th>Layanan & Durasi</th>
               <th>Psikolog PJ</th>
               <th>Terapis (Rujukan)</th>
               <th>Catatan Rekam Medis</th>
@@ -475,7 +503,7 @@ export default function App() {
             </h2>
             <p className="text-red-100 max-w-3xl text-xs md:text-sm leading-relaxed font-light">
               {userRole === 'admin' || userRole === 'it_admin' ? 'Akses Admin: Input data pendaftaran pasien, atur tarif biaya admin, serta cetak struk nota resmi.' : ''}
-              {userRole === 'psikolog' ? 'Akses Psikolog: Mengisi Assessment, Intake Interview, Diagnosa Penanganan, dan Merujuk Pasien ke Terapis.' : ''}
+              {userRole === 'psikolog' ? 'Akses Psikolog: Mengisi Anamnesa, Diagnosa, Rancangan Tindak Lanjut, Durasi Sesi / Overtime, dan Merujuk Pasien ke Terapis.' : ''}
               {userRole === 'terapis' ? 'Akses Terapis: Mengisi progres perkembangan dan perubahan perilaku pasien rujukan.' : ''}
             </p>
           </div>
@@ -693,7 +721,7 @@ export default function App() {
                                 }}
                                 className="w-full px-2.5 py-1 bg-[#701A24] text-white rounded text-[11px] font-semibold hover:bg-[#54121B] block"
                               >
-                                🩺 Fill Assessment & Rujukan
+                                🩺 Isi Rekam Medis & Tindak Lanjut
                               </button>
                             )}
 
@@ -745,12 +773,12 @@ export default function App() {
 
         </main>
 
-        {/* MODAL 1: INPUT REKAM MEDIS & RUJUKAN (PSIKOLOG) */}
+        {/* MODAL 1: INPUT REKAM MEDIS (ANAMNESA, DIAGNOSA, TINDAK LANJUT & DURASI SESI) */}
         {showMedicalModal && selectedAppt && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center border-b pb-3">
-                <h3 className="font-bold text-gray-800 text-base">Assessment & Rujukan Psikolog</h3>
+                <h3 className="font-bold text-gray-800 text-base">Form Rekam Medis Psikolog</h3>
                 <button onClick={() => setShowMedicalModal(false)} className="text-gray-400 font-bold">✕</button>
               </div>
 
@@ -759,45 +787,89 @@ export default function App() {
                   <span className="font-bold">Pasien:</span> {selectedAppt.patient_name || selectedAppt.notes}
                 </p>
 
-                {/* PENENTUAN METODE / LAYANAN OLEH PSIKOLOG */}
+                {/* 1. KATEGORI LAYANAN & DURASI SESI */}
                 <div>
-                  <label className="block font-semibold mb-1 text-gray-700">Metode / Layanan Konseling</label>
+                  <label className="block font-semibold mb-1 text-gray-700">Kategori Layanan Konseling</label>
                   <select
                     value={serviceType}
-                    onChange={(e) => setServiceType(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg outline-none font-medium"
+                    onChange={(e) => {
+                      const type = e.target.value;
+                      setServiceType(type);
+                      if (type === 'couple') {
+                        setSessionDurationPrice(600000);
+                        setDurationLabel('1 Sesi (60 Menit)');
+                      } else {
+                        setSessionDurationPrice(300000);
+                        setDurationLabel('1 Sesi (60 Menit)');
+                      }
+                    }}
+                    className="w-full p-2.5 border rounded-lg outline-none font-medium mb-3"
                   >
-                    <option value="assessment">Assessment / Intake Interview (Rp 300rb)</option>
-                    <option value="konseling">Konseling Individu (Rp 300rb)</option>
-                    <option value="psikoterapi">Psikoterapi (Rp 400rb)</option>
-                    <option value="terapi_anak">Terapi Anak (Rp 150rb)</option>
-                    <option value="couple">Konseling Pasangan (Rp 600rb)</option>
-                    <option value="keluarga">Konseling Keluarga (Rp 700rb)</option>
+                    <option value="assessment">Assessment / Intake Interview</option>
+                    <option value="konseling">Konseling Individu</option>
+                    <option value="psikoterapi">Psikoterapi</option>
+                    <option value="terapi_anak">Terapi Anak</option>
+                    <option value="couple">Konseling Pasangan (Couple)</option>
+                    <option value="keluarga">Konseling Keluarga</option>
+                  </select>
+
+                  <label className="block font-semibold mb-1 text-gray-700">Durasi Sesi / Overtime & Tarif</label>
+                  <select
+                    value={sessionDurationPrice}
+                    onChange={(e) => {
+                      const selectedPrice = Number(e.target.value);
+                      setSessionDurationPrice(selectedPrice);
+                      const list = serviceType === 'couple' ? OVERTIME_PASANGAN : OVERTIME_ASESMEN;
+                      const found = list.find(item => item.price === selectedPrice);
+                      if (found) setDurationLabel(found.label);
+                    }}
+                    className="w-full p-2.5 border border-amber-300 bg-amber-50/50 rounded-lg outline-none font-semibold text-gray-800"
+                  >
+                    {(serviceType === 'couple' ? OVERTIME_PASANGAN : OVERTIME_ASESMEN).map((opt, idx) => (
+                      <option key={idx} value={opt.price}>
+                        {opt.label} - Rp {opt.price.toLocaleString('id-ID')}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
+                {/* 2. ANAMNESA */}
                 <div>
-                  <label className="block font-semibold mb-1 text-gray-700">Assessment / Intake Interview Notes</label>
+                  <label className="block font-semibold mb-1 text-gray-700">1. Anamnesa</label>
                   <textarea
                     rows="3"
-                    placeholder="Hasil wawancara awal dan observasi..."
-                    value={assessmentNotes}
-                    onChange={(e) => setAssessmentNotes(e.target.value)}
+                    placeholder="Keluhan utama, riwayat masalah, observasi perilaku, dan hasil wawancara awal..."
+                    value={anamnesaNotes}
+                    onChange={(e) => setAnamnesaNotes(e.target.value)}
                     className="w-full p-2.5 border rounded-lg outline-none"
                   ></textarea>
                 </div>
 
+                {/* 3. DIAGNOSA */}
                 <div>
-                  <label className="block font-semibold mb-1 text-gray-700">Diagnosa & Penanganan</label>
+                  <label className="block font-semibold mb-1 text-gray-700">2. Diagnosa</label>
                   <input
                     type="text"
-                    placeholder="Diagnosa penanganan..."
+                    placeholder="Diagnosa dinamika psikologis / indikasi klinis..."
                     value={diagnosis}
                     onChange={(e) => setDiagnosis(e.target.value)}
                     className="w-full p-2.5 border rounded-lg outline-none"
                   />
                 </div>
 
+                {/* 4. RANCANGAN TINDAK LANJUT */}
+                <div>
+                  <label className="block font-semibold mb-1 text-gray-700">3. Rancangan Tindak Lanjut</label>
+                  <textarea
+                    rows="3"
+                    placeholder="Rencana intervensi, jadwal sesi lanjutan, atau rekomendasi tugas mandiri..."
+                    value={followUpPlan}
+                    onChange={(e) => setFollowUpPlan(e.target.value)}
+                    className="w-full p-2.5 border rounded-lg outline-none"
+                  ></textarea>
+                </div>
+
+                {/* RUJUKAN TERAPIS */}
                 <div>
                   <label className="block font-semibold mb-1 text-[#701A24]">
                     Rujuk Pasien Ini ke Terapis Anak (Opsional):
@@ -818,7 +890,7 @@ export default function App() {
                   onClick={handleSavePsychologistRecord}
                   className="w-full py-2.5 bg-[#701A24] text-white font-semibold rounded-lg hover:bg-[#54121B]"
                 >
-                  Simpan & Kirim Notifikasi Rujukan
+                  Simpan Rekam Medis & Tindak Lanjut
                 </button>
               </div>
             </div>
