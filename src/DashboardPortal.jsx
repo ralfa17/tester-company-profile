@@ -275,36 +275,16 @@ export default function App() {
     }
   };
 
-  <td className="p-3 space-y-1">
-  {/* Tombol Input Progress HANYA untuk Terapis */}
-  {userRole === 'terapis' && (
-    <button 
-      onClick={() => handleOpenProgressModal(item.id)}
-      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 px-2 rounded text-[11px] transition block"
-    >
-      📝 Input Progress Terapis
-    </button>
-  )}
-
-  {/* Tombol Cetak Struk & Hapus HANYA untuk Admin & IT Admin */}
-  {(userRole === 'admin' || userRole === 'it_admin') && (
-    <>
-      <button 
-        onClick={() => handlePrintNota(item)}
-        className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-1.5 px-2 rounded text-[11px] transition block"
-      >
-        🧾 Cetak Struk / Nota
-      </button>
-
-      <button
-        onClick={() => handleDeleteAppointment(item.id)}
-        className="w-full text-[11px] text-red-600 hover:text-red-800 font-semibold hover:underline text-center block mt-1"
-      >
-        Hapus Pendaftaran
-      </button>
-    </>
-  )}
-</td>
+  const handleDeleteAppointment = async (id) => {
+    if (!window.confirm('Yakin ingin menghapus data pendaftaran ini?')) return;
+    try {
+      const { error } = await supabase.from('appointments').delete().eq('id', id);
+      if (error) throw error;
+      fetchAppointments();
+    } catch (err) {
+      alert(`Gagal menghapus: ${err.message}`);
+    }
+  };
 
   const waNumber = "6282298585310";
   const waMessage = encodeURIComponent("Halo Benang Merah, saya ingin berkonsultasi mengenai layanan konseling.");
