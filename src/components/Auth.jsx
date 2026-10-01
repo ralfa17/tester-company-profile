@@ -94,9 +94,9 @@ export default function Auth() {
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full px-3.5 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#701A24] focus:border-transparent outline-none text-xs transition font-medium text-gray-800 bg-white"
               >
-                <option value="admin">Admin Klinik</option>
-                <option value="psikolog">Psikolog Klinis</option>
-                <option value="terapis">Terapis Anak</option>
+                <option value="admin">Admin/Teapis</option>
+                <option value="psikolog">Psikolog</option>
+                <option value="terapis">Terapis</option>
                 <option value="it">IT & Sistem Data</option>
               </select>
             </div>
