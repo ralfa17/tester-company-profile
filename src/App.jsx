@@ -81,7 +81,7 @@ export default function App() {
   const [teamAccessDenied, setTeamAccessDenied] = useState(false);
 
   // Master Biaya & Setting Tarif Admin
-  const [adminFeeInput, setAdminFeeInput] = useState(50000);
+  const [adminFeeInput, setAdminFeeInput] = useState(30000);
 
   // State Form Input Pasien Baru (Admin)
   const [patientName, setPatientName] = useState('');
@@ -211,7 +211,7 @@ export default function App() {
   const handleSavePsychologistRecord = async () => {
     if (!selectedAppt) return;
     try {
-      const adminFee = Number(selectedAppt.admin_fee || 50000);
+      const adminFee = Number(selectedAppt.admin_fee || 30000);
       const totalPrice = sessionDurationPrice + adminFee;
 
       const medicalLog = `[REKAM MEDIS PSIKOLOG]\n` +
@@ -626,7 +626,7 @@ export default function App() {
                         onChange={(e) => setAdminFeeInput(e.target.value)}
                         className="w-full px-3 py-2 border rounded-lg outline-none font-semibold text-gray-800"
                       />
-                      <span className="text-[10px] text-gray-400 mt-0.5 block">*Default Rp 50.000 / Keluarga +Rp 20.000</span>
+                      <span className="text-[10px] text-gray-400 mt-0.5 block">*Default Rp 30.000 / Keluarga +Rp 20.000</span>
                     </div>
 
                     <button
@@ -689,7 +689,7 @@ export default function App() {
                             </div>
 
                             <p className="text-[11px] text-green-700 font-semibold mt-1">
-                              Biaya Admin: Rp {(item.admin_fee || 50000).toLocaleString('id-ID')}
+                              Biaya Admin: Rp {(item.admin_fee || 30000).toLocaleString('id-ID')}
                             </p>
                           </td>
                           <td className="p-3 font-medium text-gray-800">{item.doctor_name}</td>
@@ -963,11 +963,11 @@ export default function App() {
                 <div className="border-t border-b py-2 space-y-1">
                   <div className="flex justify-between">
                     <span>Biaya Layanan/Sesi:</span>
-                    <span>Rp {((selectedAppt.price || 50000) - (selectedAppt.admin_fee || 50000)).toLocaleString('id-ID')}</span>
+                    <span>Rp {((selectedAppt.price || 50000) - (selectedAppt.admin_fee || 30000)).toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Biaya Administrasi:</span>
-                    <span>Rp {(selectedAppt.admin_fee || 50000).toLocaleString('id-ID')}</span>
+                    <span>Rp {(selectedAppt.admin_fee || 30000).toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between font-bold text-sm text-[#701A24] pt-1 border-t border-dashed">
                     <span>TOTAL BAYAR:</span>
