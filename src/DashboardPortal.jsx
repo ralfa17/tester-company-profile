@@ -29,7 +29,7 @@ const CheckIcon = () => (
 
 const PersonAvatarIcon = () => (
   <svg className="w-16 h-16 text-[#701A24]/40" fill="currentColor" viewBox="0 0 24 24">
-    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
   </svg>
 );
 
@@ -42,6 +42,8 @@ export default function App() {
 
   // STATE AUTH & PORTAL TIM
   const [session, setSession] = useState(null);
+  const [userRole, setUserRole] = useState('admin'); // State Role Resmi dari Supabase Table
+  const [userName, setUserName] = useState('Tim Benang Merah');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [appointmentsList, setAppointmentsList] = useState([]);
   const [loadingAppts, setLoadingAppts] = useState(false);
@@ -59,11 +61,31 @@ export default function App() {
   const [bookingMsg, setBookingMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Validasi Batas Maksimal 7 Anggota Tim
-  const checkTeamLimit = async (currentSession) => {
+  // Validasi Batas Maksimal 7 Anggota Tim + AMBIL ROLE DARI TABEL PROFILES
+  const checkTeamLimitAndFetchProfile = async (currentSession) => {
     if (!currentSession) return;
-    
+
     try {
+      // 1. Ambil Data Profile User yang Login langsung dari Tabel 'profiles'
+      const { data: profile, error: profileErr } = await supabase
+        .from('profiles')
+        .select('role, full_name')
+        .eq('id', currentSession.user.id)
+        .single();
+
+      if (profile) {
+        const dbRole = profile.role?.toLowerCase() || '';
+        const normalizedRole = (dbRole === 'it' || dbRole === 'it_admin') ? 'it_admin' : dbRole;
+        setUserRole(normalizedRole || 'admin');
+        if (profile.full_name) setUserName(profile.full_name);
+      } else {
+        // Fallback jika tidak ditemukan di profiles, coba cek metadata
+        const metaRole = currentSession?.user?.user_metadata?.role || 'admin';
+        setUserRole((metaRole === 'it' || metaRole === 'it_admin') ? 'it_admin' : metaRole);
+        setUserName(currentSession?.user?.user_metadata?.full_name || 'Tim Benang Merah');
+      }
+
+      // 2. Cek Kuota Maksimal 7 Anggota Tim
       const { data: profiles, error } = await supabase.from('profiles').select('id');
       if (error) throw error;
 
@@ -77,7 +99,7 @@ export default function App() {
         setTeamAccessDenied(false);
       }
     } catch (err) {
-      console.error("Gagal verifikasi batas kuota tim:", err.message);
+      console.error("Gagal verifikasi profil / kuota tim:", err.message);
     }
   };
 
@@ -85,20 +107,16 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      checkTeamLimit(session);
+      checkTeamLimitAndFetchProfile(session);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      checkTeamLimit(session);
+      checkTeamLimitAndFetchProfile(session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const rawRole = session?.user?.user_metadata?.role || 'admin';
-  const userRole = (rawRole === 'it' || rawRole === 'it_admin') ? 'it_admin' : rawRole;
-  const userName = session?.user?.user_metadata?.full_name || 'Tim Benang Merah';
 
   useEffect(() => {
     if (category === 'konseling') {
@@ -108,12 +126,12 @@ export default function App() {
     }
   }, [category]);
 
-  // Fetch Data Pasien dari Supabase
+  // Fetch Data Pasien dari Supabase berdasarkan Role
   const fetchAppointments = async () => {
     setLoadingAppts(true);
     try {
       let query = supabase.from('appointments').select('*').order('booking_date', { ascending: true });
-      
+
       if (userRole === 'psikolog') {
         query = query.eq('category', 'konseling');
       } else if (userRole === 'terapis') {
