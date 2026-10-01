@@ -85,7 +85,7 @@ export default function App() {
   // Master Biaya & Setting Tarif Admin (Default 30.000)
   const [adminFeeInput, setAdminFeeInput] = useState(30000);
 
-  // State Form Input Pasien Baru (Admin)
+  // State Form Input Pasien Baru
   const [patientName, setPatientName] = useState('');
   const [patientPhone, setPatientPhone] = useState('');
   const [patientAge, setPatientAge] = useState('');
@@ -115,29 +115,30 @@ export default function App() {
   // Form Progress Terapis
   const [therapyProgress, setTherapyProgress] = useState('');
 
-  // Validasi Maksimal 7 Anggota Tim + Fetch Profile Role
+  // Validasi Maksimal 7 Anggota Tim + Identifikasi Akun Shima / Role
   const checkTeamLimitAndProfile = async (currentSession) => {
     if (!currentSession) return;
     try {
-      // Ambil profile role dari database
       const { data: profile } = await supabase
         .from('profiles')
         .select('role, full_name')
         .eq('id', currentSession.user.id)
         .single();
 
-      if (profile) {
-        const dbRole = profile.role?.toLowerCase() || '';
+      let detectedName = profile?.full_name || currentSession?.user?.user_metadata?.full_name || 'Tim Benang Merah';
+      let dbRole = profile?.role?.toLowerCase() || currentSession?.user?.user_metadata?.role || '';
+
+      // PENGECEKAN KHUSUS SHIMA (HAK AKSES GANDA: ADMIN + TERAPIS)
+      if (detectedName.toLowerCase().includes('shima')) {
+        setUserRole('terapis_admin');
+      } else {
         const normalizedRole = (dbRole === 'it' || dbRole === 'it_admin') ? 'it_admin' : dbRole;
         setUserRole(normalizedRole || 'admin');
-        if (profile.full_name) setUserName(profile.full_name);
-      } else {
-        const metaRole = currentSession?.user?.user_metadata?.role || 'admin';
-        setUserRole((metaRole === 'it' || metaRole === 'it_admin') ? 'it_admin' : metaRole);
-        setUserName(currentSession?.user?.user_metadata?.full_name || 'Tim Benang Merah');
       }
 
-      // Cek batas kuota 7 tim
+      setUserName(detectedName);
+
+      // Cek Kuota Maksimal 7 Orang
       const { data: profiles, error } = await supabase.from('profiles').select('id');
       if (error) throw error;
       const isRegisteredUser = profiles.some(p => p.id === currentSession.user.id);
@@ -149,7 +150,7 @@ export default function App() {
         setTeamAccessDenied(false);
       }
     } catch (err) {
-      console.error("Gagal verifikasi kuota tim / profile:", err.message);
+      console.error("Gagal verifikasi kuota / profil tim:", err.message);
     }
   };
 
@@ -167,9 +168,12 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Role Checker Access
-  const canAccessAdminForm = userRole === 'admin' || userRole === 'it_admin' || userRole === 'terapis';
-  const canAccessTherapist = userRole === 'terapis' || userRole === 'it_admin' || userRole === 'admin';
+  // PERATURAN DUA TAMPILAN DASHBOARD PER ROLE
+  // 1. Yang Boleh Menginput Pasien (Pendaftaran Baru): Admin, IT Admin, dan Shima (Terapis Admin)
+  const canAccessAdminForm = userRole === 'admin' || userRole === 'it_admin' || userRole === 'terapis_admin';
+
+  // 2. Yang Boleh Menginput Progress Terapis: Terapis Murni dan Shima (Terapis Admin). IT Admin TIDAK BISA!
+  const canAccessTherapistProgress = userRole === 'terapis' || userRole === 'terapis_admin';
 
   // Fetch Data Pasien dari Supabase
   const fetchAppointments = async () => {
@@ -192,7 +196,7 @@ export default function App() {
     }
   }, [session, userRole, teamAccessDenied]);
 
-  // 1. ADMIN / TERAPIS RANGKAP: Pendaftaran Pasien Baru
+  // Handle Input Pendaftaran Pasien Baru
   const handleRegisterPatient = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -229,7 +233,7 @@ export default function App() {
     }
   };
 
-  // 2. PSIKOLOG: Input Anamnesa & Rekam Medis
+  // Handle Simpan Rekam Medis Psikolog
   const handleSavePsychologistRecord = async () => {
     if (!selectedAppt) return;
     try {
@@ -275,7 +279,7 @@ export default function App() {
     }
   };
 
-  // 3. TERAPIS: Input Catatan Progress
+  // Handle Simpan Progres Terapis
   const handleSaveTherapyProgress = async () => {
     if (!selectedAppt) return;
     try {
@@ -296,7 +300,7 @@ export default function App() {
     }
   };
 
-  // Hapus Pasien
+  // Handle Hapus Pasien
   const handleDeleteAppointment = async (id) => {
     if (!window.confirm('Yakin ingin menghapus data pendaftaran ini?')) return;
     try {
@@ -308,7 +312,6 @@ export default function App() {
     }
   };
 
-  // Print Nota
   const handlePrintReceipt = (appt) => {
     setSelectedAppt(appt);
     setShowReceiptModal(true);
@@ -318,7 +321,6 @@ export default function App() {
     window.print();
   };
 
-  // Export Excel
   const handleDownloadExcel = () => {
     if (appointmentsList.length === 0) {
       alert("Belum ada data untuk diunduh.");
@@ -441,20 +443,20 @@ export default function App() {
     },
     {
       name: "Silviyah Wulandari",
-      role: "CO-TERAPIS ANAK & ADMIN KLINIK",
-      spec: "Spesialisasi & Fokus: Stimulasi kemampuan sensorik, motorik halus & kasar, kesiapan belajar pra-sekolah anak, serta pendaftaran admin.",
+      role: "CO-TERAPIS ANAK",
+      spec: "Spesialisasi & Fokus: Stimulasi kemampuan sensorik, motorik halus & kasar, kesiapan belajar pra-sekolah anak.",
       image: "/silvi.jpeg"
     },
     {
       name: "Nadifa A.M",
-      role: "CO-TERAPIS ANAK & ADMIN KLINIK",
-      spec: "Spesialisasi & Fokus: Pendampingan stimulasi pemahaman emosi, ekspresi diri positif, latihan kemandirian anak, serta pendaftaran admin.",
+      role: "CO-TERAPIS ANAK",
+      spec: "Spesialisasi & Fokus: Pendampingan stimulasi pemahaman emosi, ekspresi diri positif, latihan kemandirian anak.",
       image: "/difa.jpeg"
     },
     {
       name: "Eka Zahra Nabila Nakhwa",
-      role: "CO-TERAPIS ANAK & ADMIN KLINIK",
-      spec: "Spesialisasi & Fokus: Fasilitasi terapi bermain edukatif (play therapy), pembinaan regulasi emosi & perilaku, serta pendaftaran admin.",
+      role: "CO-TERAPIS ANAK",
+      spec: "Spesialisasi & Fokus: Fasilitasi terapi bermain edukatif (play therapy), pembinaan regulasi emosi & perilaku.",
       image: "/eka.jpeg"
     }
   ];
@@ -484,7 +486,7 @@ export default function App() {
   ];
 
   // ---------------------------------------------------------------------
-  // TAMPILAN DASHBOARD PORTAL TIM (HANYA MUNCUL SETELAH LOGIN)
+  // TAMPILAN DASHBOARD PORTAL TIM (SETELAH LOGIN)
   // ---------------------------------------------------------------------
   if (session && !teamAccessDenied) {
     return (
@@ -507,7 +509,11 @@ export default function App() {
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold text-gray-800">{userName}</p>
                 <span className="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-[#701A24] capitalize">
-                  Role: {userRole === 'terapis' ? 'Terapis & Admin Klinik' : userRole.replace('_', ' ')}
+                  Role: {
+                    userRole === 'terapis_admin' ? 'Co-Terapis & Admin Klinik' :
+                    userRole === 'terapis' ? 'Co-Terapis Anak' :
+                    userRole.replace('_', ' ')
+                  }
                 </span>
               </div>
               <button
@@ -534,15 +540,16 @@ export default function App() {
               Portal Rekam Medis & Penanganan Klinik
             </h2>
             <p className="text-red-100 max-w-3xl text-xs md:text-sm leading-relaxed font-light">
-              {userRole === 'admin' || userRole === 'it_admin' ? 'Akses Admin: Input data pendaftaran pasien, atur tarif biaya admin, serta cetak struk nota resmi.' : ''}
-              {userRole === 'psikolog' ? 'Akses Psikolog: Mengisi Anamnesa, Diagnosa, Rancangan Tindak Lanjut, Durasi Sesi / Overtime, serta Rujukan Internal & Eksternal.' : ''}
-              {userRole === 'terapis' ? 'Akses Terapis Rangkap Admin: Anda dapat mendaftarkan pasien baru, mencetak nota, sekaligus menginput catatan perkembangan terapis.' : ''}
+              {userRole === 'it_admin' || userRole === 'admin' ? 'Akses Super IT / Admin: Pendaftaran pasien baru, kelola biaya admin, dan cetak nota resmi.' : ''}
+              {userRole === 'psikolog' ? 'Akses Psikolog: Mengisi Anamnesa, Diagnosa, Rancangan Tindak Lanjut, Durasi Sesi, serta Rujukan Internal & Eksternal.' : ''}
+              {userRole === 'terapis' ? 'Akses Co-Terapis: Khusus memantau rekam medis dan menginput catatan perkembangan / progress pasien.' : ''}
+              {userRole === 'terapis_admin' ? 'Akses Ganda (Shima): Menginput pendaftaran pasien baru, cetak nota, DAN menginput progress terapis.' : ''}
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print:block">
             
-            {/* COLUMN 1: FORM INPUT PASIEN (ADMIN, IT ADMIN & TERAPIS RANGKAP ADMIN) */}
+            {/* FORM INPUT PASIEN BARU: HANYA MUNCUL JIKA PUNYA AKSES ADMIN (ADMIN, IT ADMIN, & SHIMA) */}
             {canAccessAdminForm && (
               <div className="space-y-6 print:hidden">
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
@@ -657,7 +664,7 @@ export default function App() {
                         onChange={(e) => setAdminFeeInput(e.target.value)}
                         className="w-full px-3 py-2 border rounded-lg outline-none font-semibold text-gray-800"
                       />
-                      <span className="text-[10px] text-gray-400 mt-0.5 block">*Default Rp 30.000 / Keluarga +Rp 20.000</span>
+                      <span className="text-[10px] text-gray-400 mt-0.5 block">*Default Rp 30.000</span>
                     </div>
 
                     <button
@@ -672,7 +679,7 @@ export default function App() {
               </div>
             )}
 
-            {/* COLUMN 2 & 3: MASTER TABEL REKAM MEDIS PASIEN */}
+            {/* MASTER TABEL PASIEN */}
             <div className={`${canAccessAdminForm ? 'lg:col-span-2' : 'lg:col-span-3'} bg-white p-6 rounded-2xl border border-gray-100 shadow-sm print:border-none print:p-0`}>
               <div className="flex justify-between items-center mb-4 print:hidden">
                 <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2">
@@ -754,8 +761,8 @@ export default function App() {
                               </button>
                             )}
 
-                            {/* 2. TOMBOL TERAPIS (Progres Terapis) */}
-                            {canAccessTherapist && userRole !== 'psikolog' && (
+                            {/* 2. TOMBOL KHUSUS TERAPIS (MUNCUL UNTUK TERAPIS MURNI & SHIMA) */}
+                            {canAccessTherapistProgress && (
                               <button
                                 onClick={() => {
                                   setSelectedAppt(item);
@@ -767,8 +774,8 @@ export default function App() {
                               </button>
                             )}
 
-                            {/* 3. TOMBOL ADMIN / TERAPIS RANGKAP ADMIN (Cetak Struk & Hapus) */}
-                            {canAccessAdminForm && userRole !== 'psikolog' && (
+                            {/* 3. TOMBOL CETAK STRUK & HAPUS (MUNCUL UNTUK ADMIN, IT ADMIN, & SHIMA) */}
+                            {canAccessAdminForm && (
                               <>
                                 <button
                                   onClick={() => handlePrintReceipt(item)}
@@ -796,7 +803,7 @@ export default function App() {
 
         </main>
 
-        {/* MODAL 1: INPUT REKAM MEDIS */}
+        {/* MODAL 1: INPUT REKAM MEDIS PSIKOLOG */}
         {showMedicalModal && selectedAppt && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
@@ -1028,7 +1035,7 @@ export default function App() {
   }
 
   // ---------------------------------------------------------------------
-  // TAMPILAN COMPANY PROFILE PUBLIK (LENGKAP SEMUA SECTION + PROPOSAL)
+  // TAMPILAN COMPANY PROFILE PUBLIK
   // ---------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans">
@@ -1208,7 +1215,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* SECTION PROPOSAL PELAYANAN (GOOGLE DRIVE LINK) */}
+      {/* PROPOSAL SECTION */}
       <section id="proposal" className="py-12 px-6 max-w-6xl mx-auto">
         <div className="bg-gradient-to-r from-[#701A24] to-[#54121B] rounded-3xl p-8 md:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl">
           <div className="space-y-3 max-w-2xl text-center md:text-left">
@@ -1256,15 +1263,8 @@ export default function App() {
         </div>
       </section>
 
-      {/* TIM PROFESIONAL LENGKAP */}
+      {/* TIM PROFESIONAL */}
       <section id="psikolog" className="py-20 px-6 max-w-6xl mx-auto relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none z-0 opacity-15 flex items-center justify-center">
-          <svg className="w-full h-full text-[#701A24]" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M-100 200 C 300 50, 400 650, 1300 400" stroke="currentColor" strokeWidth="6" strokeDasharray="12 12" />
-            <path d="M-50 500 C 400 800, 700 100, 1250 600" stroke="currentColor" strokeWidth="4" />
-          </svg>
-        </div>
-
         <div className="relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="font-serif text-3xl md:text-4xl text-[#1E293B] mb-4">Tim Profesional Kami</h2>
@@ -1273,7 +1273,6 @@ export default function App() {
             </p>
           </div>
 
-          {/* 1. PSIKOLOG UTAMA */}
           <div className="mb-16">
             <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">Psikolog Utama</h3>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -1300,7 +1299,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* 2. TIM TERAPIS ANAK */}
           <div className="mb-16">
             <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">Tim Terapis Anak & Admin</h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1327,7 +1325,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* 3. IT & SISTEM DATA */}
           <div>
             <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">IT & Sistem Data</h3>
             <div className="max-w-md mx-auto">
