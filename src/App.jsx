@@ -87,7 +87,7 @@ export default function App() {
   const [adminFeeInput, setAdminFeeInput] = useState(30000);
 
   // State Form Input Pasien Baru
-  const [registrationType, setRegistrationType] = useState('psikolog'); // 'psikolog' atau 'terapis_direct'
+  const [registrationType, setRegistrationType] = useState('psikolog');
   const [patientName, setPatientName] = useState('');
   const [patientPhone, setPatientPhone] = useState('');
   const [patientAge, setPatientAge] = useState('');
@@ -182,7 +182,7 @@ export default function App() {
     }
   }, [session, userRole, teamAccessDenied]);
 
-  // 1. ADMIN / SHIMA: Pendaftaran Pasien Baru (Mendukung Layanan Langsung Terapis: Play and Grow / Pra Literasi)
+  // 1. ADMIN / SHIMA: Pendaftaran Pasien Baru
   const handleRegisterPatient = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -316,8 +316,12 @@ export default function App() {
     window.print();
   };
 
-  // Download Excel Rekap Medis & Keuangan
-  const handleDownloadExcel = () => {
+  // ---------------------------------------------------------------------
+  // FUNGSIONALITAS DOWNLOAD EXCEL SESUAI ROLE & HAK AKSES
+  // ---------------------------------------------------------------------
+  
+  // A. DOWNLOAD REKAP KEUANGAN (SEMUA PASIEN - REKAM MEDIS DISENSOR)
+  const handleDownloadFinancialExcel = () => {
     if (appointmentsList.length === 0) {
       alert("Belum ada data untuk diunduh.");
       return;
@@ -334,7 +338,7 @@ export default function App() {
         </style>
       </head>
       <body>
-        <h3>REKAP REKAM MEDIS & KEUANGAN BENANG MERAH</h3>
+        <h3>REKAP KEUANGAN & TRANSAKSI KLINIK BENANG MERAH</h3>
         <table>
           <thead>
             <tr>
@@ -343,10 +347,11 @@ export default function App() {
               <th>Nama Pasien</th>
               <th>Usia</th>
               <th>Kunjungan Ke-</th>
-              <th>Layanan & Durasi</th>
+              <th>Layanan</th>
               <th>Psikolog PJ</th>
-              <th>Terapis (Rujukan)</th>
+              <th>Terapis PJ</th>
               <th>Catatan Rekam Medis</th>
+              <th>Biaya Admin</th>
               <th>Total Biaya</th>
               <th>Status</th>
             </tr>
@@ -362,10 +367,11 @@ export default function App() {
           <td>${item.patient_name || '-'}</td>
           <td>${item.age ? item.age + ' Thn' : '-'}</td>
           <td>${item.visit_number || 1}</td>
-          <td>${(item.service_type || item.category || 'Belum diisi Psikolog').toUpperCase()}</td>
+          <td>${(item.service_type || item.category || 'Belum diisi').toUpperCase()}</td>
           <td>${item.doctor_name || '-'}</td>
           <td>${item.assigned_terapis || 'Tidak Ada'}</td>
-          <td>${(item.notes || '-').replace(/\n/g, ' ')}</td>
+          <td>[DISEMBUNYIKAN - RAHASIA MEDIS]</td>
+          <td>Rp ${(item.admin_fee || 30000).toLocaleString('id-ID')}</td>
           <td>Rp ${(item.price || 30000).toLocaleString('id-ID')}</td>
           <td>${(item.status || 'pending').toUpperCase()}</td>
         </tr>
@@ -378,7 +384,75 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Rekap_RekamMedis_BenangMerah_${new Date().toISOString().slice(0, 10)}.xls`);
+    link.setAttribute("download", `Rekap_Keuangan_BenangMerah_${new Date().toISOString().slice(0, 10)}.xls`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // B. DOWNLOAD REKAP MEDIS TERAPIS (KHUSUS PASIEN MILIK TERAPIS TERSEBUT)
+  const handleDownloadTherapistExcel = () => {
+    const myPatients = appointmentsList.filter(item => 
+      item.assigned_terapis && item.assigned_terapis.toLowerCase().includes(userName.toLowerCase())
+    );
+
+    if (myPatients.length === 0) {
+      alert(`Belum ada data pasien rujukan khusus untuk ${userName}.`);
+      return;
+    }
+
+    let tableHTML = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta http-equiv="content-type" content="text/plain; charset=UTF-8"/>
+        <style>
+          table { font-family: Calibri, sans-serif; font-size: 11pt; border-collapse: collapse; }
+          th { background-color: #1D4ED8; color: #ffffff; font-weight: bold; padding: 6px; }
+          td { padding: 6px; border: 1px solid #ccc; }
+        </style>
+      </head>
+      <body>
+        <h3>REKAP PROGRESS PASIEN TERAPIS (${userName.toUpperCase()})</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Jam</th>
+              <th>Nama Pasien</th>
+              <th>Usia</th>
+              <th>Kunjungan Ke-</th>
+              <th>Layanan</th>
+              <th>Psikolog PJ</th>
+              <th>Detail Rekam Medis & Progress Terapis</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    myPatients.forEach((item) => {
+      tableHTML += `
+        <tr>
+          <td>${item.booking_date || '-'}</td>
+          <td>${item.booking_time || '-'}</td>
+          <td>${item.patient_name || '-'}</td>
+          <td>${item.age ? item.age + ' Thn' : '-'}</td>
+          <td>${item.visit_number || 1}</td>
+          <td>${(item.service_type || item.category || 'Terapi Anak').toUpperCase()}</td>
+          <td>${item.doctor_name || '-'}</td>
+          <td>${(item.notes || '-').replace(/\n/g, ' ')}</td>
+          <td>${(item.status || 'pending').toUpperCase()}</td>
+        </tr>
+      `;
+    });
+
+    tableHTML += `</tbody></table></body></html>`;
+
+    const blob = new Blob([tableHTML], { type: "application/vnd.ms-excel;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Rekap_Medis_${userName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xls`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -386,7 +460,7 @@ export default function App() {
 
   // FILTER PRIVASI TABEL BERDASARKAN ROLE & PENCARIAN NAMA PASIEN
   const filteredAppointments = appointmentsList.filter((item) => {
-    // 1. Filter Privasi per Terapis (Hanya Terapis yang ditunjuk yang bisa lihat)
+    // 1. Filter Privasi per Terapis (Kecuali Admin/IT Admin)
     if (userRole === 'terapis') {
       const terapisMatch = item.assigned_terapis && item.assigned_terapis.toLowerCase().includes(userName.toLowerCase());
       if (!terapisMatch) return false;
@@ -519,22 +593,38 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
-              <div className="text-right hidden sm:block">
+            <div className="flex items-center space-x-2">
+              <div className="text-right hidden sm:block mr-2">
                 <p className="text-sm font-semibold text-gray-800">{userName}</p>
                 <span className="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-[#701A24] capitalize">
                   Role: {isShima ? 'Terapis & Admin Klinik' : userRole.replace('_', ' ')}
                 </span>
               </div>
-              <button
-                onClick={handleDownloadExcel}
-                className="px-3.5 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg text-xs transition flex items-center space-x-1"
-              >
-                <span>📊 Rekap Excel & Keuangan</span>
-              </button>
+
+              {/* DUAL DOWNLOAD BUTTONS UNTUK SHIMA / ROLE LAIN */}
+              {canAccessAdminForm && (
+                <button
+                  onClick={handleDownloadFinancialExcel}
+                  className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg text-xs transition flex items-center space-x-1"
+                  title="Download Rekap Keuangan Seluruh Pasien"
+                >
+                  <span>📊 Excel Keuangan</span>
+                </button>
+              )}
+
+              {userRole === 'terapis' && (
+                <button
+                  onClick={handleDownloadTherapistExcel}
+                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs transition flex items-center space-x-1"
+                  title="Download Rekap Progress Pasien Sendiri"
+                >
+                  <span>🩺 Excel Medis Saya</span>
+                </button>
+              )}
+
               <button
                 onClick={() => supabase.auth.signOut()}
-                className="px-4 py-2 bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-600 font-medium rounded-lg text-xs transition border border-gray-200"
+                className="px-4 py-2 bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-600 font-medium rounded-lg text-xs transition border border-gray-200 ml-1"
               >
                 Keluar
               </button>
@@ -552,8 +642,8 @@ export default function App() {
             <p className="text-red-100 max-w-3xl text-xs md:text-sm leading-relaxed font-light">
               {userRole === 'admin' || userRole === 'it_admin' ? 'Akses Admin: Input pendaftaran pasien (Jalur Psikolog atau Langsung Terapis) serta cetak struk nota resmi.' : ''}
               {userRole === 'psikolog' ? 'Akses Psikolog: Mengisi Anamnesa, Diagnosa, Rancangan Tindak Lanjut, Overtime, serta Merujuk Pasien ke Terapis Internal / Eksternal.' : ''}
-              {userRole === 'terapis' && isShima ? 'Akses Khusus Shima (Terapis & Admin): Anda dapat mendaftarkan pasien baru sekaligus melihat & mengisi progress pasien rujukan Anda.' : ''}
-              {userRole === 'terapis' && !isShima ? `Akses Khusus ${userName}: Anda hanya dapat melihat dan menginput progress pasien yang ditujukan khusus untuk Anda.` : ''}
+              {userRole === 'terapis' && isShima ? 'Akses Khusus Shima (Terapis & Admin): Anda memiliki opsi 2 tombol download (Excel Keuangan Klinik & Excel Medis Pasien Shima).' : ''}
+              {userRole === 'terapis' && !isShima ? `Akses Khusus ${userName}: Anda hanya dapat melihat, menginput, dan mendownload rekap medis pasien milik Anda sendiri.` : ''}
             </p>
           </div>
 
@@ -828,7 +918,12 @@ export default function App() {
                                 Layanan: {item.service_type || item.category}
                               </span>
                             )}
-                            <p>{item.notes || '-'}</p>
+                            <p>
+                              {/* SMART MASKING CATATAN MEDIS UNTUK ADMIN */}
+                              {userRole === 'admin' || userRole === 'it_admin' 
+                                ? '[DISEMBUNYIKAN - RAHASIA MEDIS KLINIK]'
+                                : (item.notes || '-')}
+                            </p>
                           </td>
                           <td className="p-3 text-center space-y-1.5">
                             {/* 1. TOMBOL KHUSUS PSIKOLOG */}
@@ -844,7 +939,7 @@ export default function App() {
                               </button>
                             )}
 
-                            {/* 2. TOMBOL UNTUK TERAPIS (Hanya muncul jika Pasien ditugaskan untuk Terapis tersebut) */}
+                            {/* 2. TOMBOL UNTUK TERAPIS */}
                             {canAccessTherapist && userRole === 'terapis' && (
                               <button
                                 onClick={() => {
@@ -857,7 +952,7 @@ export default function App() {
                               </button>
                             )}
 
-                            {/* 3. TOMBOL CETAK STRUK DAN HAPUS (Khusus Admin / IT Admin / Shima) */}
+                            {/* 3. TOMBOL CETAK STRUK DAN HAPUS */}
                             {canAccessAdminForm && (
                               <>
                                 <button
