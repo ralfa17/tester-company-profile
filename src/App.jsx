@@ -29,7 +29,7 @@ const CheckIcon = () => (
 
 const PersonAvatarIcon = () => (
   <svg className="w-16 h-16 text-[#701A24]/40" fill="currentColor" viewBox="0 0 24 24">
-    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
   </svg>
 );
 
@@ -75,22 +75,26 @@ export default function App() {
 
   // STATE AUTH & PORTAL TIM
   const [session, setSession] = useState(null);
-  const [userRole, setUserRole] = useState('admin');
-  const [userName, setUserName] = useState('Tim Benang Merah');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [appointmentsList, setAppointmentsList] = useState([]);
   const [loadingAppts, setLoadingAppts] = useState(false);
   const [teamAccessDenied, setTeamAccessDenied] = useState(false);
 
-  // Master Biaya & Setting Tarif Admin (Default 30.000)
+  // State Search Bar Pasien
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Master Biaya & Setting Tarif Admin (Rp 30.000)
   const [adminFeeInput, setAdminFeeInput] = useState(30000);
 
   // State Form Input Pasien Baru
+  const [registrationType, setRegistrationType] = useState('psikolog'); // 'psikolog' atau 'terapis_direct'
   const [patientName, setPatientName] = useState('');
   const [patientPhone, setPatientPhone] = useState('');
   const [patientAge, setPatientAge] = useState('');
   const [visitNumber, setVisitNumber] = useState(1);
   const [assignedPsychologist, setAssignedPsychologist] = useState(LIST_PSIKOLOG[0]);
+  const [directTherapist, setDirectTherapist] = useState(LIST_TERAPIS[0]);
+  const [directTherapyMethod, setDirectTherapyMethod] = useState('Play and Grow');
   const [bookingDate, setBookingDate] = useState('');
   const [bookingTime, setBookingTime] = useState('09:00');
   const [submitting, setSubmitting] = useState(false);
@@ -115,30 +119,10 @@ export default function App() {
   // Form Progress Terapis
   const [therapyProgress, setTherapyProgress] = useState('');
 
-  // Validasi Maksimal 7 Anggota Tim + Identifikasi Akun Shima / Role
-  const checkTeamLimitAndProfile = async (currentSession) => {
+  // Validasi Maksimal 7 Anggota Tim
+  const checkTeamLimit = async (currentSession) => {
     if (!currentSession) return;
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role, full_name')
-        .eq('id', currentSession.user.id)
-        .single();
-
-      let detectedName = profile?.full_name || currentSession?.user?.user_metadata?.full_name || 'Tim Benang Merah';
-      let dbRole = profile?.role?.toLowerCase() || currentSession?.user?.user_metadata?.role || '';
-
-      // PENGECEKAN KHUSUS SHIMA (HAK AKSES GANDA: ADMIN + TERAPIS)
-      if (detectedName.toLowerCase().includes('shima')) {
-        setUserRole('terapis_admin');
-      } else {
-        const normalizedRole = (dbRole === 'it' || dbRole === 'it_admin') ? 'it_admin' : dbRole;
-        setUserRole(normalizedRole || 'admin');
-      }
-
-      setUserName(detectedName);
-
-      // Cek Kuota Maksimal 7 Orang
       const { data: profiles, error } = await supabase.from('profiles').select('id');
       if (error) throw error;
       const isRegisteredUser = profiles.some(p => p.id === currentSession.user.id);
@@ -150,30 +134,32 @@ export default function App() {
         setTeamAccessDenied(false);
       }
     } catch (err) {
-      console.error("Gagal verifikasi kuota / profil tim:", err.message);
+      console.error("Gagal verifikasi kuota tim:", err.message);
     }
   };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      checkTeamLimitAndProfile(session);
+      checkTeamLimit(session);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      checkTeamLimitAndProfile(session);
+      checkTeamLimit(session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // PERATURAN DUA TAMPILAN DASHBOARD PER ROLE
-  // 1. Yang Boleh Menginput Pasien (Pendaftaran Baru): Admin, IT Admin, dan Shima (Terapis Admin)
-  const canAccessAdminForm = userRole === 'admin' || userRole === 'it_admin' || userRole === 'terapis_admin';
+  const rawRole = session?.user?.user_metadata?.role || 'admin';
+  const userRole = (rawRole === 'it' || rawRole === 'it_admin') ? 'it_admin' : rawRole;
+  const userName = session?.user?.user_metadata?.full_name || 'Tim Benang Merah';
 
-  // 2. Yang Boleh Menginput Progress Terapis: Terapis Murni dan Shima (Terapis Admin). IT Admin TIDAK BISA!
-  const canAccessTherapistProgress = userRole === 'terapis' || userRole === 'terapis_admin';
+  // LOGIKA SHIMA: Shima memegang akses Admin + Terapis
+  const isShima = userName.toLowerCase().includes('shima');
+  const canAccessAdminForm = userRole === 'admin' || userRole === 'it_admin' || (userRole === 'terapis' && isShima);
+  const canAccessTherapist = userRole === 'terapis' || userRole === 'it_admin' || userRole === 'admin';
 
   // Fetch Data Pasien dari Supabase
   const fetchAppointments = async () => {
@@ -196,22 +182,30 @@ export default function App() {
     }
   }, [session, userRole, teamAccessDenied]);
 
-  // Handle Input Pendaftaran Pasien Baru
+  // 1. ADMIN / SHIMA: Pendaftaran Pasien Baru (Mendukung Layanan Langsung Terapis: Play and Grow / Pra Literasi)
   const handleRegisterPatient = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setBookingMsg('');
 
     try {
+      const isDirect = registrationType === 'terapis_direct';
+      const initialNotes = isDirect 
+        ? `[Klien: ${patientName} - HP: ${patientPhone}] (Layanan Langsung Terapis: ${directTherapyMethod})`
+        : `[Klien: ${patientName} - HP: ${patientPhone}]`;
+
       const { error } = await supabase.from('appointments').insert([
         {
           patient_name: patientName,
-          doctor_name: assignedPsychologist,
-          assigned_to: assignedPsychologist,
+          doctor_name: isDirect ? 'Layanan Langsung Terapis' : assignedPsychologist,
+          assigned_to: isDirect ? 'Layanan Langsung Terapis' : assignedPsychologist,
+          assigned_terapis: isDirect ? directTherapist : null,
           booking_date: bookingDate,
           booking_time: bookingTime,
-          status: 'pending',
-          notes: `[Klien: ${patientName} - HP: ${patientPhone}]`,
+          status: isDirect ? 'dirujuk_terapis' : 'pending',
+          service_type: isDirect ? directTherapyMethod : null,
+          category: isDirect ? directTherapyMethod : null,
+          notes: initialNotes,
           age: parseInt(patientAge) || 0,
           visit_number: parseInt(visitNumber) || 1,
           price: Number(adminFeeInput),
@@ -233,7 +227,7 @@ export default function App() {
     }
   };
 
-  // Handle Simpan Rekam Medis Psikolog
+  // 2. PSIKOLOG: Input Anamnesa, Diagnosa, Rancangan Tindak Lanjut & Rujukan
   const handleSavePsychologistRecord = async () => {
     if (!selectedAppt) return;
     try {
@@ -279,7 +273,7 @@ export default function App() {
     }
   };
 
-  // Handle Simpan Progres Terapis
+  // 3. TERAPIS: Input Catatan Perkembangan / Progress Pasien
   const handleSaveTherapyProgress = async () => {
     if (!selectedAppt) return;
     try {
@@ -300,7 +294,7 @@ export default function App() {
     }
   };
 
-  // Handle Hapus Pasien
+  // Hapus Pasien
   const handleDeleteAppointment = async (id) => {
     if (!window.confirm('Yakin ingin menghapus data pendaftaran ini?')) return;
     try {
@@ -312,6 +306,7 @@ export default function App() {
     }
   };
 
+  // 4. PRINT NOTA PEMBAYARAN KLINIK
   const handlePrintReceipt = (appt) => {
     setSelectedAppt(appt);
     setShowReceiptModal(true);
@@ -321,6 +316,7 @@ export default function App() {
     window.print();
   };
 
+  // Download Excel Rekap Medis & Keuangan
   const handleDownloadExcel = () => {
     if (appointmentsList.length === 0) {
       alert("Belum ada data untuk diunduh.");
@@ -388,6 +384,24 @@ export default function App() {
     document.body.removeChild(link);
   };
 
+  // FILTER PRIVASI TABEL BERDASARKAN ROLE & PENCARIAN NAMA PASIEN
+  const filteredAppointments = appointmentsList.filter((item) => {
+    // 1. Filter Privasi per Terapis (Hanya Terapis yang ditunjuk yang bisa lihat)
+    if (userRole === 'terapis') {
+      const terapisMatch = item.assigned_terapis && item.assigned_terapis.toLowerCase().includes(userName.toLowerCase());
+      if (!terapisMatch) return false;
+    }
+
+    // 2. Filter Search Bar Nama Pasien
+    if (searchQuery.trim() !== '') {
+      const nameMatch = item.patient_name && item.patient_name.toLowerCase().includes(searchQuery.toLowerCase());
+      const notesMatch = item.notes && item.notes.toLowerCase().includes(searchQuery.toLowerCase());
+      return nameMatch || notesMatch;
+    }
+
+    return true;
+  });
+
   const waNumber = "6282298585310";
   const waMessage = encodeURIComponent("Halo Benang Merah, saya ingin berkonsultasi mengenai layanan konseling.");
   const waUrl = `https://wa.me/${waNumber}?text=${waMessage}`;
@@ -438,25 +452,25 @@ export default function App() {
     {
       name: "Shima Adinda Salsabil",
       role: "CO-TERAPIS ANAK & ADMIN KLINIK",
-      spec: "Spesialisasi & Fokus: Pendampingan interaksi positif, pembiasaan perilaku baik, stimulasi kemandirian harian anak, serta pendaftaran admin.",
+      spec: "Spesialisasi & Fokus: Pendampingan interaksi positif, Play and Grow, Pra Literasi, stimulasi kemandirian, serta pendaftaran admin.",
       image: "/shima.jpeg"
     },
     {
       name: "Silviyah Wulandari",
       role: "CO-TERAPIS ANAK",
-      spec: "Spesialisasi & Fokus: Stimulasi kemampuan sensorik, motorik halus & kasar, kesiapan belajar pra-sekolah anak.",
+      spec: "Spesialisasi & Fokus: Stimulasi kemampuan sensorik, Play and Grow, Pra Literasi, serta kesiapan belajar pra-sekolah anak.",
       image: "/silvi.jpeg"
     },
     {
       name: "Nadifa A.M",
       role: "CO-TERAPIS ANAK",
-      spec: "Spesialisasi & Fokus: Pendampingan stimulasi pemahaman emosi, ekspresi diri positif, latihan kemandirian anak.",
+      spec: "Spesialisasi & Fokus: Pendampingan stimulasi pemahaman emosi, ekspresi diri positif, Play and Grow, serta Pra Literasi.",
       image: "/difa.jpeg"
     },
     {
       name: "Eka Zahra Nabila Nakhwa",
       role: "CO-TERAPIS ANAK",
-      spec: "Spesialisasi & Fokus: Fasilitasi terapi bermain edukatif (play therapy), pembinaan regulasi emosi & perilaku.",
+      spec: "Spesialisasi & Fokus: Fasilitasi terapi bermain edukatif (Play and Grow), Pra Literasi, serta pembinaan regulasi emosi.",
       image: "/eka.jpeg"
     }
   ];
@@ -486,7 +500,7 @@ export default function App() {
   ];
 
   // ---------------------------------------------------------------------
-  // TAMPILAN DASHBOARD PORTAL TIM (SETELAH LOGIN)
+  // TAMPILAN DASHBOARD PORTAL TIM (HANYA MUNCUL SETELAH LOGIN)
   // ---------------------------------------------------------------------
   if (session && !teamAccessDenied) {
     return (
@@ -509,11 +523,7 @@ export default function App() {
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold text-gray-800">{userName}</p>
                 <span className="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-[#701A24] capitalize">
-                  Role: {
-                    userRole === 'terapis_admin' ? 'Co-Terapis & Admin Klinik' :
-                    userRole === 'terapis' ? 'Co-Terapis Anak' :
-                    userRole.replace('_', ' ')
-                  }
+                  Role: {isShima ? 'Terapis & Admin Klinik' : userRole.replace('_', ' ')}
                 </span>
               </div>
               <button
@@ -540,16 +550,16 @@ export default function App() {
               Portal Rekam Medis & Penanganan Klinik
             </h2>
             <p className="text-red-100 max-w-3xl text-xs md:text-sm leading-relaxed font-light">
-              {userRole === 'it_admin' || userRole === 'admin' ? 'Akses Super IT / Admin: Pendaftaran pasien baru, kelola biaya admin, dan cetak nota resmi.' : ''}
-              {userRole === 'psikolog' ? 'Akses Psikolog: Mengisi Anamnesa, Diagnosa, Rancangan Tindak Lanjut, Durasi Sesi, serta Rujukan Internal & Eksternal.' : ''}
-              {userRole === 'terapis' ? 'Akses Co-Terapis: Khusus memantau rekam medis dan menginput catatan perkembangan / progress pasien.' : ''}
-              {userRole === 'terapis_admin' ? 'Akses Ganda (Shima): Menginput pendaftaran pasien baru, cetak nota, DAN menginput progress terapis.' : ''}
+              {userRole === 'admin' || userRole === 'it_admin' ? 'Akses Admin: Input pendaftaran pasien (Jalur Psikolog atau Langsung Terapis) serta cetak struk nota resmi.' : ''}
+              {userRole === 'psikolog' ? 'Akses Psikolog: Mengisi Anamnesa, Diagnosa, Rancangan Tindak Lanjut, Overtime, serta Merujuk Pasien ke Terapis Internal / Eksternal.' : ''}
+              {userRole === 'terapis' && isShima ? 'Akses Khusus Shima (Terapis & Admin): Anda dapat mendaftarkan pasien baru sekaligus melihat & mengisi progress pasien rujukan Anda.' : ''}
+              {userRole === 'terapis' && !isShima ? `Akses Khusus ${userName}: Anda hanya dapat melihat dan menginput progress pasien yang ditujukan khusus untuk Anda.` : ''}
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print:block">
             
-            {/* FORM INPUT PASIEN BARU: HANYA MUNCUL JIKA PUNYA AKSES ADMIN (ADMIN, IT ADMIN, & SHIMA) */}
+            {/* COLUMN 1: FORM INPUT PASIEN (ADMIN, IT ADMIN & SHIMA) */}
             {canAccessAdminForm && (
               <div className="space-y-6 print:hidden">
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
@@ -563,6 +573,28 @@ export default function App() {
                   )}
 
                   <form onSubmit={handleRegisterPatient} className="space-y-3 text-xs">
+                    
+                    {/* OPSI PILIHAN JALUR LAYANAN */}
+                    <div className="p-2.5 bg-gray-50 rounded-lg border">
+                      <label className="block font-semibold text-gray-700 mb-1.5">Pilih Jalur Pendaftaran Layanan</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setRegistrationType('psikolog')}
+                          className={`py-1.5 px-2 rounded text-[11px] font-semibold border transition ${registrationType === 'psikolog' ? 'bg-[#701A24] text-white border-[#701A24]' : 'bg-white text-gray-600 border-gray-200'}`}
+                        >
+                          Sesi Psikolog Utama
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRegistrationType('terapis_direct')}
+                          className={`py-1.5 px-2 rounded text-[11px] font-semibold border transition ${registrationType === 'terapis_direct' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'}`}
+                        >
+                          Langsung Terapis (Direct)
+                        </button>
+                      </div>
+                    </div>
+
                     <div>
                       <label className="block font-medium text-gray-600 mb-1">Nama Pasien</label>
                       <input
@@ -587,6 +619,7 @@ export default function App() {
                       />
                     </div>
 
+                    {/* INPUT USIA PASIEN & KUNJUNGAN KE- */}
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block font-medium text-gray-600 mb-1">Usia (Tahun)</label>
@@ -614,20 +647,54 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block font-medium text-[#701A24] mb-1 font-semibold">
-                        Pilih Psikolog Penanggung Jawab
-                      </label>
-                      <select
-                        value={assignedPsychologist}
-                        onChange={(e) => setAssignedPsychologist(e.target.value)}
-                        className="w-full px-3 py-2 border border-[#701A24]/30 bg-red-50/30 rounded-lg outline-none focus:ring-2 focus:ring-[#701A24] font-medium text-gray-800"
-                      >
-                        {LIST_PSIKOLOG.map((p, idx) => (
-                          <option key={idx} value={p}>{p}</option>
-                        ))}
-                      </select>
-                    </div>
+                    {/* DYNAMIC FIELD BERDASARKAN JALUR PENDAFTARAN */}
+                    {registrationType === 'psikolog' ? (
+                      <div>
+                        <label className="block font-medium text-[#701A24] mb-1 font-semibold">
+                          Pilih Psikolog Penanggung Jawab
+                        </label>
+                        <select
+                          value={assignedPsychologist}
+                          onChange={(e) => setAssignedPsychologist(e.target.value)}
+                          className="w-full px-3 py-2 border border-[#701A24]/30 bg-red-50/30 rounded-lg outline-none font-medium text-gray-800"
+                        >
+                          {LIST_PSIKOLOG.map((p, idx) => (
+                            <option key={idx} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 bg-blue-50/50 p-2.5 rounded-lg border border-blue-100">
+                        <div>
+                          <label className="block font-medium text-blue-900 mb-1 font-semibold">
+                            Metode Layanan Terapis Direct
+                          </label>
+                          <select
+                            value={directTherapyMethod}
+                            onChange={(e) => setDirectTherapyMethod(e.target.value)}
+                            className="w-full px-3 py-2 border rounded-lg outline-none font-medium text-gray-800"
+                          >
+                            <option value="Play and Grow">Play and Grow</option>
+                            <option value="Pra Literasi">Pra Literasi</option>
+                            <option value="Play and Grow & Pra Literasi">Play and Grow & Pra Literasi</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block font-medium text-blue-900 mb-1 font-semibold">
+                            Pilih Terapis Penanggung Jawab
+                          </label>
+                          <select
+                            value={directTherapist}
+                            onChange={(e) => setDirectTherapist(e.target.value)}
+                            className="w-full px-3 py-2 border rounded-lg outline-none font-medium text-gray-800"
+                          >
+                            {LIST_TERAPIS.map((t, idx) => (
+                              <option key={idx} value={t}>{t}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
@@ -664,7 +731,7 @@ export default function App() {
                         onChange={(e) => setAdminFeeInput(e.target.value)}
                         className="w-full px-3 py-2 border rounded-lg outline-none font-semibold text-gray-800"
                       />
-                      <span className="text-[10px] text-gray-400 mt-0.5 block">*Default Rp 30.000</span>
+                      <span className="text-[10px] text-gray-400 mt-0.5 block">*Default Rp 30.000 / Keluarga +Rp 20.000</span>
                     </div>
 
                     <button
@@ -679,23 +746,38 @@ export default function App() {
               </div>
             )}
 
-            {/* MASTER TABEL PASIEN */}
+            {/* COLUMN 2 & 3: MASTER TABEL REKAM MEDIS PASIEN */}
             <div className={`${canAccessAdminForm ? 'lg:col-span-2' : 'lg:col-span-3'} bg-white p-6 rounded-2xl border border-gray-100 shadow-sm print:border-none print:p-0`}>
-              <div className="flex justify-between items-center mb-4 print:hidden">
+              
+              {/* SEARCH BAR PASIEN & HEADER TABEL */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 print:hidden">
                 <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2">
-                  <span>📋</span> Data Rekam Medis & Penanganan Pasien
+                  <span>📋</span> Data Rekam Medis Pasien
                 </h3>
-                <span className="text-xs bg-red-50 text-[#701A24] font-semibold px-2.5 py-1 rounded-full">
-                  Total Active: {appointmentsList.length} Pasien
+
+                {/* INPUT SEARCH BAR */}
+                <div className="relative flex-1 max-w-xs">
+                  <input
+                    type="text"
+                    placeholder="🔍 Cari nama pasien (cth: Zehan)..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#701A24]"
+                  />
+                  <span className="absolute left-2.5 top-1.5 text-gray-400 text-xs">🔍</span>
+                </div>
+
+                <span className="text-xs bg-red-50 text-[#701A24] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
+                  Total: {filteredAppointments.length} Pasien
                 </span>
               </div>
 
               {loadingAppts ? (
                 <p className="text-center py-10 text-gray-500 text-xs">Memuat rekam medis...</p>
-              ) : appointmentsList.length === 0 ? (
+              ) : filteredAppointments.length === 0 ? (
                 <div className="text-center py-12 text-gray-400 text-xs">
                   <p className="text-3xl mb-2">📋</p>
-                  <p>Belum ada data pendaftaran pasien.</p>
+                  <p>{searchQuery ? `Tidak ditemukan pasien dengan nama "${searchQuery}"` : 'Belum ada data pendaftaran pasien.'}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -704,18 +786,19 @@ export default function App() {
                       <tr>
                         <th className="p-3 border-b">Jadwal & Pasien</th>
                         <th className="p-3 border-b">Psikolog PJ</th>
-                        <th className="p-3 border-b">Rujukan Terapis</th>
+                        <th className="p-3 border-b">Terapis PJ</th>
                         <th className="p-3 border-b">Catatan Rekam Medis</th>
                         <th className="p-3 border-b text-center">Aksi / Tindakan</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {appointmentsList.map((item) => (
+                      {filteredAppointments.map((item) => (
                         <tr key={item.id} className="hover:bg-gray-50 transition">
                           <td className="p-3">
                             <p className="font-medium text-gray-800">{item.booking_date} ({item.booking_time})</p>
                             <p className="font-semibold text-gray-900 mt-0.5">{item.patient_name}</p>
                             
+                            {/* Tampilan Usia dan Kunjungan di Tabel */}
                             <div className="flex items-center gap-1 mt-1">
                               <span className="text-[10px] bg-gray-100 text-gray-600 font-medium px-1.5 py-0.5 rounded">
                                 {item.age ? `${item.age} Thn` : 'Usia -'}
@@ -729,7 +812,7 @@ export default function App() {
                               Biaya Admin: Rp {(item.admin_fee || 30000).toLocaleString('id-ID')}
                             </p>
                           </td>
-                          <td className="p-3 font-medium text-gray-800">{item.doctor_name}</td>
+                          <td className="p-3 font-medium text-gray-800">{item.doctor_name || '-'}</td>
                           <td className="p-3">
                             {item.assigned_terapis ? (
                               <span className="bg-blue-50 text-blue-700 font-semibold px-2 py-1 rounded text-[11px] block">
@@ -761,8 +844,8 @@ export default function App() {
                               </button>
                             )}
 
-                            {/* 2. TOMBOL KHUSUS TERAPIS (MUNCUL UNTUK TERAPIS MURNI & SHIMA) */}
-                            {canAccessTherapistProgress && (
+                            {/* 2. TOMBOL UNTUK TERAPIS (Hanya muncul jika Pasien ditugaskan untuk Terapis tersebut) */}
+                            {canAccessTherapist && userRole === 'terapis' && (
                               <button
                                 onClick={() => {
                                   setSelectedAppt(item);
@@ -774,7 +857,7 @@ export default function App() {
                               </button>
                             )}
 
-                            {/* 3. TOMBOL CETAK STRUK & HAPUS (MUNCUL UNTUK ADMIN, IT ADMIN, & SHIMA) */}
+                            {/* 3. TOMBOL CETAK STRUK DAN HAPUS (Khusus Admin / IT Admin / Shima) */}
                             {canAccessAdminForm && (
                               <>
                                 <button
@@ -803,7 +886,7 @@ export default function App() {
 
         </main>
 
-        {/* MODAL 1: INPUT REKAM MEDIS PSIKOLOG */}
+        {/* MODAL 1: INPUT REKAM MEDIS (PSIKOLOG) */}
         {showMedicalModal && selectedAppt && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
@@ -817,6 +900,7 @@ export default function App() {
                   <span className="font-bold">Pasien:</span> {selectedAppt.patient_name || selectedAppt.notes}
                 </p>
 
+                {/* KATEGORI LAYANAN & DURASI SESI */}
                 <div>
                   <label className="block font-semibold mb-1 text-gray-700">Kategori Layanan Konseling</label>
                   <select
@@ -862,6 +946,7 @@ export default function App() {
                   </select>
                 </div>
 
+                {/* ANAMNESA */}
                 <div>
                   <label className="block font-semibold mb-1 text-gray-700">1. Anamnesa</label>
                   <textarea
@@ -873,6 +958,7 @@ export default function App() {
                   ></textarea>
                 </div>
 
+                {/* DIAGNOSA */}
                 <div>
                   <label className="block font-semibold mb-1 text-gray-700">2. Diagnosa</label>
                   <input
@@ -884,6 +970,7 @@ export default function App() {
                   />
                 </div>
 
+                {/* RANCANGAN TINDAK LANJUT */}
                 <div>
                   <label className="block font-semibold mb-1 text-gray-700">3. Rancangan Tindak Lanjut</label>
                   <textarea
@@ -895,6 +982,7 @@ export default function App() {
                   ></textarea>
                 </div>
 
+                {/* RUJUKAN INTERNAL */}
                 <div>
                   <label className="block font-semibold mb-1 text-[#701A24]">
                     Rujuk Pasien Ini ke Terapis Anak Internal (Opsional):
@@ -911,6 +999,7 @@ export default function App() {
                   </select>
                 </div>
 
+                {/* RUJUKAN EKSTERNAL */}
                 <div>
                   <label className="block font-semibold mb-1 text-blue-800">
                     Rujukan Eksternal (Dokter / Psikiater / Rumah Sakit Luar - Opsional):
@@ -935,7 +1024,7 @@ export default function App() {
           </div>
         )}
 
-        {/* MODAL 2: INPUT PROGRESS PERUBAHAN TERAPIS */}
+        {/* MODAL 2: INPUT PROGRESS PERUBAHAN (TERAPIS) */}
         {showTherapyModal && selectedAppt && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
@@ -946,7 +1035,7 @@ export default function App() {
 
               <div className="space-y-3 text-xs">
                 <p className="bg-blue-50 p-2.5 rounded text-blue-900 leading-relaxed">
-                  <span className="font-bold">Info Rekam Medis Psikolog:</span><br />
+                  <span className="font-bold">Info Pasien & Catatan Medis:</span><br />
                   {selectedAppt.notes}
                 </p>
 
@@ -1215,7 +1304,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* PROPOSAL SECTION */}
+      {/* SECTION PROPOSAL PELAYANAN (GOOGLE DRIVE LINK) */}
       <section id="proposal" className="py-12 px-6 max-w-6xl mx-auto">
         <div className="bg-gradient-to-r from-[#701A24] to-[#54121B] rounded-3xl p-8 md:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl">
           <div className="space-y-3 max-w-2xl text-center md:text-left">
@@ -1263,8 +1352,15 @@ export default function App() {
         </div>
       </section>
 
-      {/* TIM PROFESIONAL */}
+      {/* TIM PROFESIONAL LENGKAP */}
       <section id="psikolog" className="py-20 px-6 max-w-6xl mx-auto relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none z-0 opacity-15 flex items-center justify-center">
+          <svg className="w-full h-full text-[#701A24]" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M-100 200 C 300 50, 400 650, 1300 400" stroke="currentColor" strokeWidth="6" strokeDasharray="12 12" />
+            <path d="M-50 500 C 400 800, 700 100, 1250 600" stroke="currentColor" strokeWidth="4" />
+          </svg>
+        </div>
+
         <div className="relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="font-serif text-3xl md:text-4xl text-[#1E293B] mb-4">Tim Profesional Kami</h2>
@@ -1273,6 +1369,7 @@ export default function App() {
             </p>
           </div>
 
+          {/* 1. PSIKOLOG UTAMA */}
           <div className="mb-16">
             <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">Psikolog Utama</h3>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -1299,8 +1396,9 @@ export default function App() {
             </div>
           </div>
 
+          {/* 2. TIM TERAPIS ANAK */}
           <div className="mb-16">
-            <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">Tim Terapis Anak & Admin</h3>
+            <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">Tim Terapis Anak</h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {therapist.map((t, i) => (
                 <div key={i} className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-all">
@@ -1325,6 +1423,7 @@ export default function App() {
             </div>
           </div>
 
+          {/* 3. IT & SISTEM DATA */}
           <div>
             <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">IT & Sistem Data</h3>
             <div className="max-w-md mx-auto">
