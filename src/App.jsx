@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import Auth from './components/Auth';
 
-// Icon SVG Components
+// ============================================================
+// ELEGANT SVG ICON COMPONENTS (MINIMALIS & SLEEK)
+// ============================================================
 const HeartHandshakeIcon = () => (
-  <svg className="w-6 h-6 text-[#701A24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+  <svg className="w-6 h-6 text-[#701A24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
   </svg>
 );
@@ -15,8 +17,14 @@ const ShieldCheckIcon = () => (
   </svg>
 );
 
+const LockPrivacyIcon = () => (
+  <svg className="w-3.5 h-3.5 text-amber-700 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+  </svg>
+);
+
 const UserCheckIcon = () => (
-  <svg className="w-8 h-8 text-[#701A24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+  <svg className="w-8 h-8 text-[#701A24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
     <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
   </svg>
 );
@@ -28,8 +36,50 @@ const CheckIcon = () => (
 );
 
 const PersonAvatarIcon = () => (
-  <svg className="w-16 h-16 text-[#701A24]/40" fill="currentColor" viewBox="0 0 24 24">
-    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+  <svg className="w-16 h-16 text-[#701A24]/30" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+  </svg>
+);
+
+const EditIcon = () => (
+  <svg className="w-3.5 h-3.5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  </svg>
+);
+
+const ReceiptIcon = () => (
+  <svg className="w-3.5 h-3.5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 14l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const StethoscopeIcon = () => (
+  <svg className="w-3.5 h-3.5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  </svg>
+);
+
+const DownloadChartIcon = () => (
+  <svg className="w-3.5 h-3.5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  </svg>
+);
+
+const SearchIcon = () => (
+  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+);
+
+const UserBadgeIcon = () => (
+  <svg className="w-3.5 h-3.5 inline mr-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const SparklesIcon = () => (
+  <svg className="w-4 h-4 text-amber-500 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
   </svg>
 );
 
@@ -83,7 +133,7 @@ export default function App() {
   // State Search Bar Pasien
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Master Biaya & Setting Tarif Admin (Rp 30.000)
+  // Master Biaya & Setting Tarif Admin
   const [adminFeeInput, setAdminFeeInput] = useState(30000);
 
   // State Form Input Pasien Baru
@@ -100,11 +150,23 @@ export default function App() {
   const [submitting, setSubmitting] = useState(false);
   const [bookingMsg, setBookingMsg] = useState('');
 
-  // State Modals Medis & Nota Pembayaran
+  // State Modals Medis, Edit & Nota Pembayaran
   const [selectedAppt, setSelectedAppt] = useState(null);
   const [showMedicalModal, setShowMedicalModal] = useState(false);
   const [showTherapyModal, setShowTherapyModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [receiptType, setReceiptType] = useState('paid');
+
+  // Form State Edit Pasien
+  const [editPatientName, setEditPatientName] = useState('');
+  const [editAge, setEditAge] = useState('');
+  const [editVisitNumber, setEditVisitNumber] = useState(1);
+  const [editBookingDate, setEditBookingDate] = useState('');
+  const [editBookingTime, setEditBookingTime] = useState('09:00');
+  const [editAdminFee, setEditAdminFee] = useState(30000);
+  const [editPsychologist, setEditPsychologist] = useState('');
+  const [editTherapist, setEditTherapist] = useState('');
 
   // Form Rekam Medis Psikolog
   const [serviceType, setServiceType] = useState('assessment');
@@ -159,7 +221,7 @@ export default function App() {
   // LOGIKA SHIMA: Shima memegang akses Admin + Terapis
   const isShima = userName.toLowerCase().includes('shima');
   const canAccessAdminForm = userRole === 'admin' || userRole === 'it_admin' || (userRole === 'terapis' && isShima);
-  const canAccessTherapist = userRole === 'terapis' || userRole === 'it_admin' || userRole === 'admin';
+  const canAccessTherapist = userRole === 'terapis' || userRole === 'it_admin';
 
   // Fetch Data Pasien dari Supabase
   const fetchAppointments = async () => {
@@ -227,7 +289,48 @@ export default function App() {
     }
   };
 
-  // 2. PSIKOLOG: Input Anamnesa, Diagnosa, Rancangan Tindak Lanjut & Rujukan
+  // 2. EDIT DATA PENDAFTARAN (ADMIN & SHIMA)
+  const handleOpenEditModal = (item) => {
+    setSelectedAppt(item);
+    setEditPatientName(item.patient_name || '');
+    setEditAge(item.age || 0);
+    setEditVisitNumber(item.visit_number || 1);
+    setEditBookingDate(item.booking_date || '');
+    setEditBookingTime(item.booking_time || '09:00');
+    setEditAdminFee(item.admin_fee || 30000);
+    setEditPsychologist(item.doctor_name || LIST_PSIKOLOG[0]);
+    setEditTherapist(item.assigned_terapis || '');
+    setShowEditModal(true);
+  };
+
+  const handleSaveEditAppointment = async () => {
+    if (!selectedAppt) return;
+    try {
+      const currentServicePrice = (selectedAppt.price || 30000) - (selectedAppt.admin_fee || 30000);
+      const newTotalPrice = currentServicePrice + Number(editAdminFee);
+
+      const { error } = await supabase.from('appointments').update({
+        patient_name: editPatientName,
+        age: parseInt(editAge) || 0,
+        visit_number: parseInt(editVisitNumber) || 1,
+        booking_date: editBookingDate,
+        booking_time: editBookingTime,
+        admin_fee: Number(editAdminFee),
+        price: newTotalPrice,
+        doctor_name: editPsychologist,
+        assigned_terapis: editTherapist || null
+      }).eq('id', selectedAppt.id);
+
+      if (error) throw error;
+      alert("Data pendaftaran berhasil diperbarui!");
+      setShowEditModal(false);
+      fetchAppointments();
+    } catch (err) {
+      alert(`Gagal memperbarui data: ${err.message}`);
+    }
+  };
+
+  // 3. PSIKOLOG: Input Anamnesa & Diagnosa
   const handleSavePsychologistRecord = async () => {
     if (!selectedAppt) return;
     try {
@@ -240,7 +343,7 @@ export default function App() {
       } else if (referToTherapist) {
         rujukanText = `Rujukan Terapis Internal: ${referToTherapist}`;
       } else if (externalReferral) {
-        rujukanText = `Rujukan Eksternal (Dokter/Spesialis): ${externalReferral}`;
+        rujukanText = `Rujukan Eksternal: ${externalReferral}`;
       }
 
       const medicalLog = `[REKAM MEDIS PSIKOLOG]\n` +
@@ -260,7 +363,7 @@ export default function App() {
       }).eq('id', selectedAppt.id);
 
       if (error) throw error;
-      alert("Rekam medis, durasi sesi & rujukan berhasil disimpan!");
+      alert("Rekam medis berhasil disimpan!");
       setShowMedicalModal(false);
       setAnamnesaNotes('');
       setDiagnosis('');
@@ -273,7 +376,7 @@ export default function App() {
     }
   };
 
-  // 3. TERAPIS: Input Catatan Perkembangan / Progress Pasien
+  // 4. TERAPIS: Input Catatan Progress
   const handleSaveTherapyProgress = async () => {
     if (!selectedAppt) return;
     try {
@@ -306,7 +409,7 @@ export default function App() {
     }
   };
 
-  // 4. PRINT NOTA PEMBAYARAN KLINIK
+  // PRINT NOTA PEMBAYARAN KLINIK
   const handlePrintReceipt = (appt) => {
     setSelectedAppt(appt);
     setShowReceiptModal(true);
@@ -316,11 +419,7 @@ export default function App() {
     window.print();
   };
 
-  // ---------------------------------------------------------------------
-  // FUNGSIONALITAS DOWNLOAD EXCEL SESUAI ROLE & HAK AKSES
-  // ---------------------------------------------------------------------
-  
-  // A. DOWNLOAD REKAP KEUANGAN (SEMUA PASIEN - REKAM MEDIS DISENSOR)
+  // EXCEL DOWNLOAD KEUANGAN
   const handleDownloadFinancialExcel = () => {
     if (appointmentsList.length === 0) {
       alert("Belum ada data untuk diunduh.");
@@ -330,7 +429,7 @@ export default function App() {
     let tableHTML = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
       <head>
-        <meta http-equiv="content-type" content="text/plain; charset=UTF-8"/>
+        <meta http-equiv="content-type" text/plain; charset=UTF-8"/>
         <style>
           table { font-family: Calibri, sans-serif; font-size: 11pt; border-collapse: collapse; }
           th { background-color: #701A24; color: #ffffff; font-weight: bold; padding: 6px; }
@@ -370,7 +469,7 @@ export default function App() {
           <td>${(item.service_type || item.category || 'Belum diisi').toUpperCase()}</td>
           <td>${item.doctor_name || '-'}</td>
           <td>${item.assigned_terapis || 'Tidak Ada'}</td>
-          <td>[DISEMBUNYIKAN - RAHASIA MEDIS]</td>
+          <td>[PRIVACY MEDIS]</td>
           <td>Rp ${(item.admin_fee || 30000).toLocaleString('id-ID')}</td>
           <td>Rp ${(item.price || 30000).toLocaleString('id-ID')}</td>
           <td>${(item.status || 'pending').toUpperCase()}</td>
@@ -390,7 +489,6 @@ export default function App() {
     document.body.removeChild(link);
   };
 
-  // B. DOWNLOAD REKAP MEDIS TERAPIS (KHUSUS PASIEN MILIK TERAPIS TERSEBUT)
   const handleDownloadTherapistExcel = () => {
     const myPatients = appointmentsList.filter(item => 
       item.assigned_terapis && item.assigned_terapis.toLowerCase().includes(userName.toLowerCase())
@@ -404,7 +502,7 @@ export default function App() {
     let tableHTML = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
       <head>
-        <meta http-equiv="content-type" content="text/plain; charset=UTF-8"/>
+        <meta http-equiv="content-type" text/plain; charset=UTF-8"/>
         <style>
           table { font-family: Calibri, sans-serif; font-size: 11pt; border-collapse: collapse; }
           th { background-color: #1D4ED8; color: #ffffff; font-weight: bold; padding: 6px; }
@@ -458,21 +556,13 @@ export default function App() {
     document.body.removeChild(link);
   };
 
-  // FILTER PRIVASI TABEL BERDASARKAN ROLE & PENCARIAN NAMA PASIEN
+  // FILTER SEARCHING PASIEN
   const filteredAppointments = appointmentsList.filter((item) => {
-    // 1. Filter Privasi per Terapis (Kecuali Admin/IT Admin)
-    if (userRole === 'terapis') {
-      const terapisMatch = item.assigned_terapis && item.assigned_terapis.toLowerCase().includes(userName.toLowerCase());
-      if (!terapisMatch) return false;
-    }
-
-    // 2. Filter Search Bar Nama Pasien
     if (searchQuery.trim() !== '') {
       const nameMatch = item.patient_name && item.patient_name.toLowerCase().includes(searchQuery.toLowerCase());
       const notesMatch = item.notes && item.notes.toLowerCase().includes(searchQuery.toLowerCase());
       return nameMatch || notesMatch;
     }
-
     return true;
   });
 
@@ -487,19 +577,19 @@ export default function App() {
   const services = [
     {
       title: "Konseling Individu",
-      desc: "Sesi tatap muka atau online privat untuk membantu meredakan kecemasan, depresi, manajemen stres, hingga trauma masa lalu.",
+      desc: "Sesi privat untuk membantu meredakan kecemasan, depresi, manajemen stres, hingga pemulihan trauma.",
       tags: ["Kecemasan", "Stres", "Depresi", "Self-Growth"],
       type: "user"
     },
     {
       title: "Konseling Pasangan & Pernikahan",
-      desc: "Membangun kembali komunikasi yang sehat, menyelesaikan konflik hubungan, serta mempererat ikatan emosional bersama pasangan.",
+      desc: "Membangun kembali komunikasi yang sehat, menyelesaikan konflik hubungan, serta mempererat ikatan emosional.",
       tags: ["Komunikasi", "Konflik Hubungan", "Pernikahan"],
       type: "heart"
     },
     {
       title: "Pengembangan Diri & Karir",
-      desc: "Eksplorasi potensi diri, mengatasi burnout kerja, penyusunan tujuan hidup, dan peningkatan ketahanan mental (resilience).",
+      desc: "Eksplorasi potensi diri, mengatasi burnout kerja, penyusunan tujuan hidup, dan peningkatan resilience.",
       tags: ["Burnout", "Karir", "Confidence", "Life-Goal"],
       type: "shield"
     }
@@ -509,14 +599,12 @@ export default function App() {
     {
       name: "M. Azka Maulana, M.Psi., Psikolog",
       role: "FOUNDER & PSIKOLOG KLINIS ANAK - REMAJA",
-      license: "SIPP Resmi",
       spec: "Fokus mendampingi tumbuh kembang anak, pengasuhan remaja, serta asesmen psikologi pendidikan dan perilaku.",
       image: "/azka.jpeg"
     },
     {
       name: "Sofia Halida Fatma, M.Psi., Psikolog",
       role: "CO-FOUNDER & PSIKOLOG KLINIS DEWASA",
-      license: "SIPP Resmi",
       spec: "Ahli dalam konseling kesehatan mental dewasa, manajemen stres & kecemasan, hubungan interpersonal, serta pemulihan trauma.",
       image: "/sofia.jpeg"
     }
@@ -573,58 +661,63 @@ export default function App() {
     }
   ];
 
-  // ---------------------------------------------------------------------
-  // TAMPILAN DASHBOARD PORTAL TIM (HANYA MUNCUL SETELAH LOGIN)
-  // ---------------------------------------------------------------------
+  // ============================================================
+  // TAMPILAN DASHBOARD PORTAL TIM
+  // ============================================================
   if (session && !teamAccessDenied) {
     return (
-      <div className="min-h-screen bg-gray-50 text-gray-800 font-sans print:bg-white">
+      <div className="min-h-screen bg-[#FAF8F5] text-gray-800 font-sans print:bg-white animate-fade-up">
         
-        {/* HEADER DASHBOARD */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm print:hidden">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        {/* HEADER DASHBOARD DENGAN LOGO PNG */}
+        <header className="bg-white/90 backdrop-blur-md border-b border-[#EADFD5] sticky top-0 z-10 shadow-sm print:hidden">
+          <div className="max-w-7xl mx-auto px-6 py-3.5 flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 bg-[#701A24] rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                BM
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="Logo Benang Merah" 
+                className="w-9 h-9 object-contain rounded-lg shadow-sm hover:scale-105 transition-transform"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "/logo.jpeg";
+                }}
+              />
               <div>
-                <h1 className="font-bold text-lg text-gray-900 leading-tight">Benang Merah</h1>
-                <p className="text-xs text-gray-500">Sistem Rekam Medis & Manajemen Klinik</p>
+                <h1 className="font-serif font-bold text-lg text-[#701A24] leading-tight">Benang Merah</h1>
+                <p className="text-[11px] text-gray-500 font-medium">Sistem Rekam Medis & Manajemen Klinik</p>
               </div>
             </div>
 
             <div className="flex items-center space-x-2">
               <div className="text-right hidden sm:block mr-2">
-                <p className="text-sm font-semibold text-gray-800">{userName}</p>
-                <span className="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-[#701A24] capitalize">
+                <p className="text-xs font-semibold text-gray-800">{userName}</p>
+                <span className="inline-block px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-[#701A24]/10 text-[#701A24] uppercase tracking-wider">
                   Role: {isShima ? 'Terapis & Admin Klinik' : userRole.replace('_', ' ')}
                 </span>
               </div>
 
-              {/* DUAL DOWNLOAD BUTTONS UNTUK SHIMA / ROLE LAIN */}
               {canAccessAdminForm && (
                 <button
                   onClick={handleDownloadFinancialExcel}
-                  className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg text-xs transition flex items-center space-x-1"
+                  className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-lg text-xs transition shadow-sm hover:shadow flex items-center"
                   title="Download Rekap Keuangan Seluruh Pasien"
                 >
-                  <span>📊 Excel Keuangan</span>
+                  <DownloadChartIcon /> Excel Keuangan
                 </button>
               )}
 
-              {userRole === 'terapis' && (
+              {(userRole === 'terapis' || isShima) && (
                 <button
                   onClick={handleDownloadTherapistExcel}
-                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs transition flex items-center space-x-1"
+                  className="px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg text-xs transition shadow-sm hover:shadow flex items-center"
                   title="Download Rekap Progress Pasien Sendiri"
                 >
-                  <span>🩺 Excel Medis Saya</span>
+                  <StethoscopeIcon /> Excel Medis Saya
                 </button>
               )}
 
               <button
                 onClick={() => supabase.auth.signOut()}
-                className="px-4 py-2 bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-600 font-medium rounded-lg text-xs transition border border-gray-200 ml-1"
+                className="px-3.5 py-1.5 bg-white hover:bg-red-50 text-gray-600 hover:text-red-700 font-medium rounded-lg text-xs transition border border-gray-200 shadow-sm ml-1"
               >
                 Keluar
               </button>
@@ -635,50 +728,53 @@ export default function App() {
         {/* ISI DASHBOARD MANAGEMENT */}
         <main className="max-w-7xl mx-auto px-6 py-8 print:p-0">
           
-          <div className="bg-gradient-to-r from-[#701A24] to-[#54121B] rounded-2xl p-6 md:p-8 text-white shadow-lg mb-8 print:hidden">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">
-              Portal Rekam Medis & Penanganan Klinik
-            </h2>
-            <p className="text-red-100 max-w-3xl text-xs md:text-sm leading-relaxed font-light">
-              {userRole === 'admin' || userRole === 'it_admin' ? 'Akses Admin: Input pendaftaran pasien (Jalur Psikolog atau Langsung Terapis) serta cetak struk nota resmi.' : ''}
-              {userRole === 'psikolog' ? 'Akses Psikolog: Mengisi Anamnesa, Diagnosa, Rancangan Tindak Lanjut, Overtime, serta Merujuk Pasien ke Terapis Internal / Eksternal.' : ''}
-              {userRole === 'terapis' && isShima ? 'Akses Khusus Shima (Terapis & Admin): Anda memiliki opsi 2 tombol download (Excel Keuangan Klinik & Excel Medis Pasien Shima).' : ''}
-              {userRole === 'terapis' && !isShima ? `Akses Khusus ${userName}: Anda hanya dapat melihat, menginput, dan mendownload rekap medis pasien milik Anda sendiri.` : ''}
-            </p>
+          <div className="bg-gradient-to-r from-[#701A24] via-[#5D151E] to-[#420E15] rounded-2xl p-6 md:p-8 text-white shadow-xl mb-8 print:hidden relative overflow-hidden">
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full text-[11px] font-medium text-red-100 mb-3 backdrop-blur-sm">
+                <SparklesIcon /> Portal Terintegrasi & Strict Privilege
+              </div>
+              <h2 className="text-2xl md:text-3xl font-serif font-bold mb-2 tracking-tight">
+                Portal Rekam Medis & Penanganan Klinik
+              </h2>
+              <p className="text-red-100/90 max-w-3xl text-xs md:text-sm leading-relaxed font-light">
+                {userRole === 'admin' || userRole === 'it_admin' ? 'Akses Admin: Pendaftaran, edit jadwal, dan cetak nota. Rekam medis terlindungi 100% rahasia.' : ''}
+                {userRole === 'psikolog' ? 'Akses Psikolog: Mengisi Anamnesa, Diagnosa & Merujuk Terapis. Catatan Direct Terapis bersifat rahasia.' : ''}
+                {isShima ? 'Akses Khusus Shima (Admin + Terapis): Memegang fitur Admin, serta BISA MENGISI progress medis khusus pasien yang ditunjuk ke Shima.' : ''}
+                {userRole === 'terapis' && !isShima ? `Akses Khusus ${userName}: Anda hanya dapat membaca & mengisi progress medis pasien milik Anda sendiri.` : ''}
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print:block">
             
-            {/* COLUMN 1: FORM INPUT PASIEN (ADMIN, IT ADMIN & SHIMA) */}
+            {/* COLUMN 1: FORM INPUT PASIEN (ADMIN & SHIMA) */}
             {canAccessAdminForm && (
               <div className="space-y-6 print:hidden">
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                  <h3 className="font-bold text-gray-800 text-sm mb-4 flex items-center gap-2">
-                    <span>✍️</span> Form Pendaftaran Pasien Baru
+                <div className="bg-white p-6 rounded-2xl border border-[#EADFD5] shadow-sm hover:shadow-md transition-shadow">
+                  <h3 className="font-serif font-bold text-gray-800 text-sm mb-4 flex items-center gap-2 text-[#701A24]">
+                    <EditIcon /> Form Pendaftaran Pasien Baru
                   </h3>
                   {bookingMsg && (
-                    <div className={`p-3 rounded-lg mb-4 text-xs ${bookingMsg.includes('Gagal') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                    <div className={`p-3 rounded-lg mb-4 text-xs font-medium ${bookingMsg.includes('Gagal') ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
                       {bookingMsg}
                     </div>
                   )}
 
-                  <form onSubmit={handleRegisterPatient} className="space-y-3 text-xs">
-                    
-                    {/* OPSI PILIHAN JALUR LAYANAN */}
-                    <div className="p-2.5 bg-gray-50 rounded-lg border">
-                      <label className="block font-semibold text-gray-700 mb-1.5">Pilih Jalur Pendaftaran Layanan</label>
+                  <form onSubmit={handleRegisterPatient} className="space-y-3.5 text-xs">
+                    <div className="p-3 bg-[#FAF8F5] rounded-xl border border-[#EADFD5]">
+                      <label className="block font-semibold text-gray-700 mb-2">Pilih Jalur Pendaftaran Layanan</label>
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
                           onClick={() => setRegistrationType('psikolog')}
-                          className={`py-1.5 px-2 rounded text-[11px] font-semibold border transition ${registrationType === 'psikolog' ? 'bg-[#701A24] text-white border-[#701A24]' : 'bg-white text-gray-600 border-gray-200'}`}
+                          className={`py-2 px-2 rounded-lg text-[11px] font-semibold transition border ${registrationType === 'psikolog' ? 'bg-[#701A24] text-white border-[#701A24] shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-[#701A24]/40'}`}
                         >
                           Sesi Psikolog Utama
                         </button>
                         <button
                           type="button"
                           onClick={() => setRegistrationType('terapis_direct')}
-                          className={`py-1.5 px-2 rounded text-[11px] font-semibold border transition ${registrationType === 'terapis_direct' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'}`}
+                          className={`py-2 px-2 rounded-lg text-[11px] font-semibold transition border ${registrationType === 'terapis_direct' ? 'bg-blue-700 text-white border-blue-700 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'}`}
                         >
                           Langsung Terapis (Direct)
                         </button>
@@ -693,7 +789,7 @@ export default function App() {
                         placeholder="Nama lengkap pasien"
                         value={patientName}
                         onChange={(e) => setPatientName(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-[#701A24]"
+                        className="w-full px-3.5 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#701A24] focus:border-transparent transition"
                       />
                     </div>
 
@@ -705,11 +801,10 @@ export default function App() {
                         placeholder="08xxxxxxxxxx"
                         value={patientPhone}
                         onChange={(e) => setPatientPhone(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-[#701A24]"
+                        className="w-full px-3.5 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#701A24] focus:border-transparent transition"
                       />
                     </div>
 
-                    {/* INPUT USIA PASIEN & KUNJUNGAN KE- */}
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block font-medium text-gray-600 mb-1">Usia (Tahun)</label>
@@ -720,7 +815,7 @@ export default function App() {
                           placeholder="Contoh: 25"
                           value={patientAge}
                           onChange={(e) => setPatientAge(e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-[#701A24]"
+                          className="w-full px-3.5 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#701A24] focus:border-transparent transition"
                         />
                       </div>
                       <div>
@@ -732,12 +827,11 @@ export default function App() {
                           placeholder="1"
                           value={visitNumber}
                           onChange={(e) => setVisitNumber(e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-[#701A24]"
+                          className="w-full px-3.5 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#701A24] focus:border-transparent transition"
                         />
                       </div>
                     </div>
 
-                    {/* DYNAMIC FIELD BERDASARKAN JALUR PENDAFTARAN */}
                     {registrationType === 'psikolog' ? (
                       <div>
                         <label className="block font-medium text-[#701A24] mb-1 font-semibold">
@@ -746,7 +840,7 @@ export default function App() {
                         <select
                           value={assignedPsychologist}
                           onChange={(e) => setAssignedPsychologist(e.target.value)}
-                          className="w-full px-3 py-2 border border-[#701A24]/30 bg-red-50/30 rounded-lg outline-none font-medium text-gray-800"
+                          className="w-full px-3.5 py-2 border border-[#701A24]/30 bg-red-50/20 rounded-lg outline-none font-medium text-gray-800 focus:ring-2 focus:ring-[#701A24]"
                         >
                           {LIST_PSIKOLOG.map((p, idx) => (
                             <option key={idx} value={p}>{p}</option>
@@ -754,7 +848,7 @@ export default function App() {
                         </select>
                       </div>
                     ) : (
-                      <div className="space-y-2 bg-blue-50/50 p-2.5 rounded-lg border border-blue-100">
+                      <div className="space-y-2 bg-blue-50/40 p-3 rounded-xl border border-blue-100">
                         <div>
                           <label className="block font-medium text-blue-900 mb-1 font-semibold">
                             Metode Layanan Terapis Direct
@@ -762,7 +856,7 @@ export default function App() {
                           <select
                             value={directTherapyMethod}
                             onChange={(e) => setDirectTherapyMethod(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg outline-none font-medium text-gray-800"
+                            className="w-full px-3.5 py-2 border rounded-lg outline-none font-medium text-gray-800"
                           >
                             <option value="Play and Grow">Play and Grow</option>
                             <option value="Pra Literasi">Pra Literasi</option>
@@ -776,7 +870,7 @@ export default function App() {
                           <select
                             value={directTherapist}
                             onChange={(e) => setDirectTherapist(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg outline-none font-medium text-gray-800"
+                            className="w-full px-3.5 py-2 border rounded-lg outline-none font-medium text-gray-800"
                           >
                             {LIST_TERAPIS.map((t, idx) => (
                               <option key={idx} value={t}>{t}</option>
@@ -794,7 +888,7 @@ export default function App() {
                           required
                           value={bookingDate}
                           onChange={(e) => setBookingDate(e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg outline-none"
+                          className="w-full px-3.5 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#701A24]"
                         />
                       </div>
                       <div>
@@ -802,7 +896,7 @@ export default function App() {
                         <select
                           value={bookingTime}
                           onChange={(e) => setBookingTime(e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg outline-none"
+                          className="w-full px-3.5 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#701A24]"
                         >
                           <option value="09:00">09:00 WIB</option>
                           <option value="11:00">11:00 WIB</option>
@@ -819,15 +913,14 @@ export default function App() {
                         type="number"
                         value={adminFeeInput}
                         onChange={(e) => setAdminFeeInput(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg outline-none font-semibold text-gray-800"
+                        className="w-full px-3.5 py-2 border border-gray-200 rounded-lg outline-none font-semibold text-gray-800 focus:ring-2 focus:ring-[#701A24]"
                       />
-                      <span className="text-[10px] text-gray-400 mt-0.5 block">*Default Rp 30.000 / Keluarga +Rp 20.000</span>
                     </div>
 
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="w-full py-2.5 bg-[#701A24] text-white rounded-lg font-semibold hover:bg-[#54121B] transition shadow"
+                      className="w-full py-2.5 bg-[#701A24] text-white rounded-lg font-semibold hover:bg-[#54121B] transition duration-200 shadow-md hover:shadow-lg"
                     >
                       {submitting ? 'Menyimpan...' : 'Simpan Pendaftaran Pasien'}
                     </button>
@@ -837,27 +930,27 @@ export default function App() {
             )}
 
             {/* COLUMN 2 & 3: MASTER TABEL REKAM MEDIS PASIEN */}
-            <div className={`${canAccessAdminForm ? 'lg:col-span-2' : 'lg:col-span-3'} bg-white p-6 rounded-2xl border border-gray-100 shadow-sm print:border-none print:p-0`}>
+            <div className={`${canAccessAdminForm ? 'lg:col-span-2' : 'lg:col-span-3'} bg-white p-6 rounded-2xl border border-[#EADFD5] shadow-sm print:border-none print:p-0`}>
               
-              {/* SEARCH BAR PASIEN & HEADER TABEL */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 print:hidden">
-                <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2">
-                  <span>📋</span> Data Rekam Medis Pasien
+                <h3 className="font-serif font-bold text-gray-800 text-sm flex items-center gap-2 text-[#701A24]">
+                  <StethoscopeIcon /> Data Rekam Medis Pasien
                 </h3>
 
-                {/* INPUT SEARCH BAR */}
                 <div className="relative flex-1 max-w-xs">
                   <input
                     type="text"
-                    placeholder="🔍 Cari nama pasien (cth: Alfa)..."
+                    placeholder="Cari nama pasien..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#701A24]"
+                    className="w-full pl-8 pr-3.5 py-1.5 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#701A24] focus:border-transparent transition"
                   />
-                  <span className="absolute left-2.5 top-1.5 text-gray-400 text-xs">🔍</span>
+                  <span className="absolute left-2.5 top-2">
+                    <SearchIcon />
+                  </span>
                 </div>
 
-                <span className="text-xs bg-red-50 text-[#701A24] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
+                <span className="text-xs bg-red-50 text-[#701A24] font-semibold px-3 py-1 rounded-full whitespace-nowrap border border-red-100">
                   Total: {filteredAppointments.length} Pasien
                 </span>
               </div>
@@ -866,13 +959,13 @@ export default function App() {
                 <p className="text-center py-10 text-gray-500 text-xs">Memuat rekam medis...</p>
               ) : filteredAppointments.length === 0 ? (
                 <div className="text-center py-12 text-gray-400 text-xs">
-                  <p className="text-3xl mb-2">📋</p>
+                  <p className="text-2xl mb-2">📋</p>
                   <p>{searchQuery ? `Tidak ditemukan pasien dengan nama "${searchQuery}"` : 'Belum ada data pendaftaran pasien.'}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-gray-600 border-collapse">
-                    <thead className="bg-gray-50 text-gray-700 font-semibold border-b">
+                    <thead className="bg-[#FAF8F5] text-gray-700 font-semibold border-b border-[#EADFD5]">
                       <tr>
                         <th className="p-3 border-b">Jadwal & Pasien</th>
                         <th className="p-3 border-b">Psikolog PJ</th>
@@ -881,97 +974,134 @@ export default function App() {
                         <th className="p-3 border-b text-center">Aksi / Tindakan</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y">
-                      {filteredAppointments.map((item) => (
-                        <tr key={item.id} className="hover:bg-gray-50 transition">
-                          <td className="p-3">
-                            <p className="font-medium text-gray-800">{item.booking_date} ({item.booking_time})</p>
-                            <p className="font-semibold text-gray-900 mt-0.5">{item.patient_name}</p>
-                            
-                            {/* Tampilan Usia dan Kunjungan di Tabel */}
-                            <div className="flex items-center gap-1 mt-1">
-                              <span className="text-[10px] bg-gray-100 text-gray-600 font-medium px-1.5 py-0.5 rounded">
-                                {item.age ? `${item.age} Thn` : 'Usia -'}
-                              </span>
-                              <span className="text-[10px] bg-red-50 text-[#701A24] font-semibold px-1.5 py-0.5 rounded">
-                                Kunjungan Ke-{item.visit_number || 1}
-                              </span>
-                            </div>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredAppointments.map((item) => {
+                        const isDirectTherapy = item.doctor_name === 'Layanan Langsung Terapis';
+                        
+                        const isMyPsychologistPatient = item.doctor_name && 
+                          item.doctor_name.toLowerCase().includes(userName.toLowerCase());
 
-                            <p className="text-[11px] text-green-700 font-semibold mt-1">
-                              Biaya Admin: Rp {(item.admin_fee || 30000).toLocaleString('id-ID')}
-                            </p>
-                          </td>
-                          <td className="p-3 font-medium text-gray-800">{item.doctor_name || '-'}</td>
-                          <td className="p-3">
-                            {item.assigned_terapis ? (
-                              <span className="bg-blue-50 text-blue-700 font-semibold px-2 py-1 rounded text-[11px] block">
-                                🧑‍⚕️ {item.assigned_terapis}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400 italic">Belum dirujuk</span>
-                            )}
-                          </td>
-                          <td className="p-3 text-gray-700 whitespace-pre-line max-w-xs text-[11px] leading-relaxed">
-                            {(item.service_type || item.category) && (
-                              <span className="inline-block bg-purple-50 text-purple-700 font-semibold px-2 py-0.5 rounded text-[10px] mb-1 capitalize">
-                                Layanan: {item.service_type || item.category}
-                              </span>
-                            )}
-                            <p>
-                              {/* SMART MASKING CATATAN MEDIS UNTUK ADMIN */}
-                              {userRole === 'admin' || userRole === 'it_admin' 
-                                ? 'PRIVACY MEDIS'
-                                : (item.notes || '-')}
-                            </p>
-                          </td>
-                          <td className="p-3 text-center space-y-1.5">
-                            {/* 1. TOMBOL KHUSUS PSIKOLOG */}
-                            {userRole === 'psikolog' && (
-                              <button
-                                onClick={() => {
-                                  setSelectedAppt(item);
-                                  setShowMedicalModal(true);
-                                }}
-                                className="w-full px-2.5 py-1 bg-[#701A24] text-white rounded text-[11px] font-semibold hover:bg-[#54121B] block"
-                              >
-                                🩺 Isi Rekam Medis & Tindak Lanjut
-                              </button>
-                            )}
+                        const isMyTherapistPatient = item.assigned_terapis && (
+                          item.assigned_terapis.toLowerCase().includes(userName.toLowerCase()) ||
+                          (isShima && item.assigned_terapis.toLowerCase().includes('shima'))
+                        );
 
-                            {/* 2. TOMBOL UNTUK TERAPIS */}
-                            {canAccessTherapist && userRole === 'terapis' && (
-                              <button
-                                onClick={() => {
-                                  setSelectedAppt(item);
-                                  setShowTherapyModal(true);
-                                }}
-                                className="w-full px-2.5 py-1 bg-blue-600 text-white rounded text-[11px] font-semibold hover:bg-blue-700 block mb-1"
-                              >
-                                📝 Input Progress Terapis
-                              </button>
-                            )}
+                        let canReadNotes = false;
+                        let hiddenReason = '[PRIVACY MEDIS]';
 
-                            {/* 3. TOMBOL CETAK STRUK DAN HAPUS */}
-                            {canAccessAdminForm && (
-                              <>
+                        if (userRole === 'psikolog') {
+                          if (isDirectTherapy) {
+                            canReadNotes = false;
+                            hiddenReason = '[PRIVACY MEDIS]';
+                          } else if (isMyPsychologistPatient) {
+                            canReadNotes = true;
+                          } else {
+                            canReadNotes = false;
+                            hiddenReason = '[PRIVACY MEDIS]';
+                          }
+                        } else if (userRole === 'terapis' || isShima) {
+                          if (isMyTherapistPatient) {
+                            canReadNotes = true;
+                          } else {
+                            canReadNotes = false;
+                            hiddenReason = '[PRIVACY MEDIS]';
+                          }
+                        } else {
+                          canReadNotes = false;
+                          hiddenReason = '[PRIVACY MEDIS]';
+                        }
+
+                        return (
+                          <tr key={item.id} className="hover:bg-[#FAF8F5]/60 transition-colors">
+                            <td className="p-3">
+                              <p className="font-medium text-gray-800">{item.booking_date} ({item.booking_time})</p>
+                              <p className="font-semibold text-gray-900 mt-0.5">{item.patient_name}</p>
+                              
+                              <div className="flex items-center gap-1 mt-1">
+                                <span className="text-[10px] bg-gray-100 text-gray-600 font-medium px-1.5 py-0.5 rounded">
+                                  {item.age ? `${item.age} Thn` : 'Usia -'}
+                                </span>
+                                <span className="text-[10px] bg-red-50 text-[#701A24] font-semibold px-1.5 py-0.5 rounded">
+                                  Kunjungan Ke-{item.visit_number || 1}
+                                </span>
+                              </div>
+
+                              <p className="text-[11px] text-emerald-700 font-semibold mt-1">
+                                Biaya Admin: Rp {(item.admin_fee || 30000).toLocaleString('id-ID')}
+                              </p>
+                            </td>
+                            <td className="p-3 font-medium text-gray-800">{item.doctor_name || '-'}</td>
+                            <td className="p-3">
+                              {item.assigned_terapis ? (
+                                <span className="bg-blue-50 text-blue-700 font-semibold px-2 py-1 rounded text-[11px] inline-flex items-center">
+                                  <UserBadgeIcon /> {item.assigned_terapis}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400 italic">Belum dirujuk</span>
+                              )}
+                            </td>
+                            <td className="p-3 text-gray-700 whitespace-pre-line max-w-xs text-[11px] leading-relaxed">
+                              {(item.service_type || item.category) && (
+                                <span className="inline-block bg-purple-50 text-purple-700 font-semibold px-2 py-0.5 rounded text-[10px] mb-1 capitalize border border-purple-100">
+                                  Layanan: {item.service_type || item.category}
+                                </span>
+                              )}
+                              <p className={canReadNotes ? 'text-gray-800 font-normal' : 'text-gray-400 italic font-medium flex items-center'}>
+                                {!canReadNotes && <LockPrivacyIcon />}
+                                {canReadNotes ? (item.notes || '-') : hiddenReason}
+                              </p>
+                            </td>
+                            <td className="p-3 text-center space-y-1.5">
+                              {userRole === 'psikolog' && !isDirectTherapy && isMyPsychologistPatient && (
                                 <button
-                                  onClick={() => handlePrintReceipt(item)}
-                                  className="w-full px-2.5 py-1 bg-green-600 text-white rounded text-[11px] font-semibold hover:bg-green-700 block"
+                                  onClick={() => {
+                                    setSelectedAppt(item);
+                                    setShowMedicalModal(true);
+                                  }}
+                                  className="w-full px-2.5 py-1.5 bg-[#701A24] text-white rounded-lg text-[11px] font-semibold hover:bg-[#54121B] block transition shadow-sm"
                                 >
-                                  🧾 Cetak Struk / Nota
+                                  <StethoscopeIcon /> Isi Rekam Medis
                                 </button>
+                              )}
+
+                              {isMyTherapistPatient && (
                                 <button
-                                  onClick={() => handleDeleteAppointment(item.id)}
-                                  className="text-[10px] text-red-600 hover:text-red-800 font-medium hover:underline block w-full pt-1"
+                                  onClick={() => {
+                                    setSelectedAppt(item);
+                                    setShowTherapyModal(true);
+                                  }}
+                                  className="w-full px-2.5 py-1.5 bg-blue-700 text-white rounded-lg text-[11px] font-semibold hover:bg-blue-800 block mb-1 transition shadow-sm"
                                 >
-                                  Hapus Pendaftaran
+                                  <EditIcon /> Input Progress Terapis
                                 </button>
-                              </>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                              )}
+
+                              {canAccessAdminForm && (
+                                <>
+                                  <button
+                                    onClick={() => handleOpenEditModal(item)}
+                                    className="w-full px-2.5 py-1 bg-amber-600 text-white rounded text-[11px] font-semibold hover:bg-amber-700 block transition"
+                                  >
+                                    <EditIcon /> Edit Pendaftaran
+                                  </button>
+                                  <button
+                                    onClick={() => handlePrintReceipt(item)}
+                                    className="w-full px-2.5 py-1 bg-emerald-700 text-white rounded text-[11px] font-semibold hover:bg-emerald-800 block transition"
+                                  >
+                                    <ReceiptIcon /> Cetak Struk / Nota
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteAppointment(item.id)}
+                                    className="text-[10px] text-red-600 hover:text-red-800 font-medium hover:underline block w-full pt-1"
+                                  >
+                                    Hapus Pendaftaran
+                                  </button>
+                                </>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -981,21 +1111,139 @@ export default function App() {
 
         </main>
 
-        {/* MODAL 1: INPUT REKAM MEDIS (PSIKOLOG) */}
-        {showMedicalModal && selectedAppt && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        {/* MODAL EDIT DATA PENDAFTARAN */}
+        {showEditModal && selectedAppt && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-fade-up">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
               <div className="flex justify-between items-center border-b pb-3">
-                <h3 className="font-bold text-gray-800 text-base">Form Rekam Medis Psikolog</h3>
-                <button onClick={() => setShowMedicalModal(false)} className="text-gray-400 font-bold">✕</button>
+                <h3 className="font-bold text-gray-800 text-base flex items-center gap-1.5 text-[#701A24]">
+                  <EditIcon /> Edit Detail Pendaftaran Pasien
+                </h3>
+                <button onClick={() => setShowEditModal(false)} className="text-gray-400 font-bold hover:text-gray-600">✕</button>
               </div>
 
               <div className="space-y-3 text-xs">
-                <p className="bg-gray-50 p-2.5 rounded text-gray-700">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Nama Pasien</label>
+                  <input
+                    type="text"
+                    value={editPatientName}
+                    onChange={(e) => setEditPatientName(e.target.value)}
+                    className="w-full p-2.5 border rounded-lg outline-none font-semibold text-gray-800"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Usia (Tahun)</label>
+                    <input
+                      type="number"
+                      value={editAge}
+                      onChange={(e) => setEditAge(e.target.value)}
+                      className="w-full p-2.5 border rounded-lg outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Kunjungan Ke-</label>
+                    <input
+                      type="number"
+                      value={editVisitNumber}
+                      onChange={(e) => setEditVisitNumber(e.target.value)}
+                      className="w-full p-2.5 border rounded-lg outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Tanggal Sesi</label>
+                    <input
+                      type="date"
+                      value={editBookingDate}
+                      onChange={(e) => setEditBookingDate(e.target.value)}
+                      className="w-full p-2.5 border rounded-lg outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Jam Sesi</label>
+                    <select
+                      value={editBookingTime}
+                      onChange={(e) => setEditBookingTime(e.target.value)}
+                      className="w-full p-2.5 border rounded-lg outline-none"
+                    >
+                      <option value="09:00">09:00 WIB</option>
+                      <option value="11:00">11:00 WIB</option>
+                      <option value="14:00">14:00 WIB</option>
+                      <option value="16:00">16:00 WIB</option>
+                      <option value="19:00">19:00 WIB</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Biaya Administrasi Klinik (Rp)</label>
+                  <input
+                    type="number"
+                    value={editAdminFee}
+                    onChange={(e) => setEditAdminFee(e.target.value)}
+                    className="w-full p-2.5 border rounded-lg outline-none font-semibold text-gray-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Psikolog Penanggung Jawab</label>
+                  <select
+                    value={editPsychologist}
+                    onChange={(e) => setEditPsychologist(e.target.value)}
+                    className="w-full p-2.5 border rounded-lg outline-none"
+                  >
+                    {LIST_PSIKOLOG.map((p, idx) => (
+                      <option key={idx} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Terapis Rujukan</label>
+                  <select
+                    value={editTherapist}
+                    onChange={(e) => setEditTherapist(e.target.value)}
+                    className="w-full p-2.5 border rounded-lg outline-none"
+                  >
+                    <option value="">-- Tanpa Terapis / Belum Dirujuk --</option>
+                    {LIST_TERAPIS.map((t, idx) => (
+                      <option key={idx} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  onClick={handleSaveEditAppointment}
+                  className="w-full py-2.5 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition shadow"
+                >
+                  Simpan Perubahan Pendaftaran
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL 1: INPUT REKAM MEDIS (PSIKOLOG) */}
+        {showMedicalModal && selectedAppt && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-fade-up">
+            <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center border-b pb-3">
+                <h3 className="font-bold text-gray-800 text-base flex items-center gap-1.5 text-[#701A24]">
+                  <StethoscopeIcon /> Form Rekam Medis Psikolog
+                </h3>
+                <button onClick={() => setShowMedicalModal(false)} className="text-gray-400 font-bold hover:text-gray-600">✕</button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <p className="bg-gray-50 p-2.5 rounded-lg text-gray-700 border">
                   <span className="font-bold">Pasien:</span> {selectedAppt.patient_name || selectedAppt.notes}
                 </p>
 
-                {/* KATEGORI LAYANAN & DURASI SESI */}
                 <div>
                   <label className="block font-semibold mb-1 text-gray-700">Kategori Layanan Konseling</label>
                   <select
@@ -1041,19 +1289,17 @@ export default function App() {
                   </select>
                 </div>
 
-                {/* ANAMNESA */}
                 <div>
                   <label className="block font-semibold mb-1 text-gray-700">1. Anamnesa</label>
                   <textarea
                     rows="3"
-                    placeholder="Keluhan utama, riwayat masalah, observasi perilaku, dan hasil wawancara awal..."
+                    placeholder="Keluhan utama, riwayat masalah, observasi perilaku, dan wawancara awal..."
                     value={anamnesaNotes}
                     onChange={(e) => setAnamnesaNotes(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg outline-none"
+                    className="w-full p-2.5 border rounded-lg outline-none focus:ring-2 focus:ring-[#701A24]"
                   ></textarea>
                 </div>
 
-                {/* DIAGNOSA */}
                 <div>
                   <label className="block font-semibold mb-1 text-gray-700">2. Diagnosa</label>
                   <input
@@ -1061,23 +1307,21 @@ export default function App() {
                     placeholder="Diagnosa dinamika psikologis / indikasi klinis..."
                     value={diagnosis}
                     onChange={(e) => setDiagnosis(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg outline-none"
+                    className="w-full p-2.5 border rounded-lg outline-none focus:ring-2 focus:ring-[#701A24]"
                   />
                 </div>
 
-                {/* RANCANGAN TINDAK LANJUT */}
                 <div>
                   <label className="block font-semibold mb-1 text-gray-700">3. Rancangan Tindak Lanjut</label>
                   <textarea
                     rows="3"
-                    placeholder="Rencana intervensi, jadwal sesi lanjutan, atau rekomendasi tugas mandiri..."
+                    placeholder="Rencana intervensi, jadwal sesi lanjutan, atau tugas mandiri..."
                     value={followUpPlan}
                     onChange={(e) => setFollowUpPlan(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg outline-none"
+                    className="w-full p-2.5 border rounded-lg outline-none focus:ring-2 focus:ring-[#701A24]"
                   ></textarea>
                 </div>
 
-                {/* RUJUKAN INTERNAL */}
                 <div>
                   <label className="block font-semibold mb-1 text-[#701A24]">
                     Rujuk Pasien Ini ke Terapis Anak Internal (Opsional):
@@ -1094,14 +1338,13 @@ export default function App() {
                   </select>
                 </div>
 
-                {/* RUJUKAN EKSTERNAL */}
                 <div>
                   <label className="block font-semibold mb-1 text-blue-800">
                     Rujukan Eksternal (Dokter / Psikiater / Rumah Sakit Luar - Opsional):
                   </label>
                   <input
                     type="text"
-                    placeholder="Contoh: Dr. Sp.KJ / RS Gunung Jati / Klinik Spesialis..."
+                    placeholder="Contoh: Dr. Sp.KJ / RS Gunung Jati..."
                     value={externalReferral}
                     onChange={(e) => setExternalReferral(e.target.value)}
                     className="w-full p-2.5 border border-blue-300 rounded-lg outline-none font-medium bg-blue-50/20"
@@ -1110,7 +1353,7 @@ export default function App() {
 
                 <button
                   onClick={handleSavePsychologistRecord}
-                  className="w-full py-2.5 bg-[#701A24] text-white font-semibold rounded-lg hover:bg-[#54121B]"
+                  className="w-full py-2.5 bg-[#701A24] text-white font-semibold rounded-lg hover:bg-[#54121B] transition shadow"
                 >
                   Simpan Rekam Medis & Tindak Lanjut
                 </button>
@@ -1121,15 +1364,17 @@ export default function App() {
 
         {/* MODAL 2: INPUT PROGRESS PERUBAHAN (TERAPIS) */}
         {showTherapyModal && selectedAppt && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-fade-up">
             <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
               <div className="flex justify-between items-center border-b pb-3">
-                <h3 className="font-bold text-gray-800 text-base">Catatan Progres Terapis</h3>
-                <button onClick={() => setShowTherapyModal(false)} className="text-gray-400 font-bold">✕</button>
+                <h3 className="font-bold text-gray-800 text-base flex items-center gap-1.5 text-blue-700">
+                  <EditIcon /> Catatan Progres Terapis
+                </h3>
+                <button onClick={() => setShowTherapyModal(false)} className="text-gray-400 font-bold hover:text-gray-600">✕</button>
               </div>
 
               <div className="space-y-3 text-xs">
-                <p className="bg-blue-50 p-2.5 rounded text-blue-900 leading-relaxed">
+                <p className="bg-blue-50/70 p-3 rounded-xl text-blue-900 leading-relaxed border border-blue-100">
                   <span className="font-bold">Info Pasien & Catatan Medis:</span><br />
                   {selectedAppt.notes}
                 </p>
@@ -1141,13 +1386,13 @@ export default function App() {
                     placeholder="Isi catatan perkembangan perilaku, stimulasi, atau emosi anak..."
                     value={therapyProgress}
                     onChange={(e) => setTherapyProgress(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg outline-none"
+                    className="w-full p-2.5 border rounded-lg outline-none focus:ring-2 focus:ring-blue-600"
                   ></textarea>
                 </div>
 
                 <button
                   onClick={handleSaveTherapyProgress}
-                  className="w-full py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"
+                  className="w-full py-2.5 bg-blue-700 text-white font-semibold rounded-lg hover:bg-blue-800 transition shadow"
                 >
                   Simpan Catatan Terapis
                 </button>
@@ -1158,23 +1403,97 @@ export default function App() {
 
         {/* MODAL 3: NOTA PEMBAYARAN KLINIK */}
         {showReceiptModal && selectedAppt && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-fade-up">
             <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+              
               <div className="flex justify-between items-center border-b pb-3 print:hidden">
-                <h3 className="font-bold text-gray-800 text-sm">Struk Pembayaran Klinik</h3>
-                <button onClick={() => setShowReceiptModal(false)} className="text-gray-400 font-bold">✕</button>
+                <h3 className="font-bold text-gray-800 text-sm flex items-center gap-1.5 text-[#701A24]">
+                  <ReceiptIcon /> Cetak Struk & Invoice
+                </h3>
+                <button onClick={() => setShowReceiptModal(false)} className="text-gray-400 font-bold hover:text-gray-600">✕</button>
               </div>
 
-              <div className="p-4 border border-dashed rounded-xl space-y-3 text-xs font-mono bg-amber-50/20">
+              <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl print:hidden">
+                <button
+                  onClick={() => setReceiptType('invoice')}
+                  className={`py-2 text-xs font-semibold rounded-lg transition ${
+                    receiptType === 'invoice'
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  📄 Invoice Tagihan
+                </button>
+                <button
+                  onClick={() => setReceiptType('paid')}
+                  className={`py-2 text-xs font-semibold rounded-lg transition ${
+                    receiptType === 'paid'
+                      ? 'bg-[#701A24] text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  ✅ Struk Lunas (PAID)
+                </button>
+              </div>
+
+              <div className="p-5 border border-dashed border-[#EADFD5] rounded-2xl space-y-3 font-mono bg-[#FAF8F5] relative overflow-hidden">
+                
+                {receiptType === 'paid' && (
+                  <div className="absolute right-4 bottom-10 pointer-events-none transform -rotate-12 opacity-90">
+                    <div className="border-4 border-double border-[#701A24] rounded-xl px-3 py-1.5 text-center bg-white/95 shadow-sm">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <img 
+                          src="/logo.png" 
+                          alt="Logo Benang Merah" 
+                          className="w-5 h-5 object-contain"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/logo.jpeg";
+                          }}
+                        />
+                        <span className="text-xs font-black tracking-wider text-[#701A24] uppercase">
+                          LUNAS / PAID
+                        </span>
+                      </div>
+                      <p className="text-[8px] font-bold text-[#701A24] mt-0.5 border-t border-[#701A24] pt-0.5 uppercase tracking-widest">
+                        BENANG MERAH
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="text-center border-b pb-2">
-                  <h2 className="font-bold text-base font-serif text-[#701A24]">BENANG MERAH</h2>
-                  <p className="text-[10px] text-gray-500">Layanan Psikologi & Kesehatan Mental</p>
-                  <p className="text-[9px] text-gray-400">Jl. Bandung No. B9/16, Nuansa Majasem | WA: 0822-9858-5310</p>
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <img 
+                      src="/logo.png" 
+                      alt="Logo Benang Merah" 
+                      className="w-7 h-7 object-contain"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/logo.jpeg";
+                      }}
+                    />
+                    <h2 className="font-bold text-base font-serif text-[#701A24]">BENANG MERAH</h2>
+                  </div>
+                  <p className="text-[10px] text-gray-500 font-sans">Layanan Psikologi & Kesehatan Mental</p>
+                  <p className="text-[9px] text-gray-400 font-sans">Jl. Bandung No. B9/16, Nuansa Majasem | WA: 0822-9858-5310</p>
+                  
+                  <div className="mt-2">
+                    {receiptType === 'invoice' ? (
+                      <span className="inline-block px-2.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded uppercase tracking-wider">
+                        INVOICE PEMBAYARAN
+                      </span>
+                    ) : (
+                      <span className="inline-block px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded uppercase tracking-wider">
+                        NOTA BUKTI PEMBAYARAN LUNAS
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="space-y-1 text-[11px]">
-                  <p><span className="text-gray-500">Tanggal:</span> {selectedAppt.booking_date} ({selectedAppt.booking_time})</p>
-                  <p><span className="text-gray-500">Klien/Pasien:</span> {selectedAppt.patient_name || selectedAppt.notes}</p>
+                <div className="space-y-1 text-[11px] font-sans">
+                  <p><span className="text-gray-500">Tanggal & Sesi:</span> {selectedAppt.booking_date} ({selectedAppt.booking_time})</p>
+                  <p><span className="text-gray-500">Klien / Pasien:</span> <strong className="text-gray-800">{selectedAppt.patient_name || selectedAppt.notes}</strong></p>
                   <p><span className="text-gray-500">Layanan:</span> {(selectedAppt.service_type || selectedAppt.category || 'Terlampir').toUpperCase()}</p>
                   <p><span className="text-gray-500">Psikolog PJ:</span> {selectedAppt.doctor_name}</p>
                   {selectedAppt.assigned_terapis && (
@@ -1182,34 +1501,39 @@ export default function App() {
                   )}
                 </div>
 
-                <div className="border-t border-b py-2 space-y-1">
+                <div className="border-t border-b py-2 space-y-1 text-xs font-sans">
                   <div className="flex justify-between">
-                    <span>Biaya Layanan/Sesi:</span>
+                    <span>Biaya Layanan / Sesi:</span>
                     <span>Rp {((selectedAppt.price || 30000) - (selectedAppt.admin_fee || 30000)).toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Biaya Administrasi:</span>
                     <span>Rp {(selectedAppt.admin_fee || 30000).toLocaleString('id-ID')}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-sm text-[#701A24] pt-1 border-t border-dashed">
-                    <span>TOTAL BAYAR:</span>
+                  <div className="flex justify-between font-bold text-sm text-[#701A24] pt-1.5 border-t border-dashed">
+                    <span>TOTAL {receiptType === 'invoice' ? 'TAGIHAN' : 'BAYAR'}:</span>
                     <span>Rp {(selectedAppt.price || 30000).toLocaleString('id-ID')}</span>
                   </div>
                 </div>
 
-                <div className="text-center text-[10px] text-gray-500 italic pt-1">
-                  *** Terima kasih telah mempercayakan ruang pemulihan Anda bersama Benang Merah ***
+                <div className="text-center text-[10px] text-gray-500 italic pt-1 font-sans">
+                  {receiptType === 'invoice' ? (
+                    <span>* Silakan lakukan pembayaran sesuai nominal di atas ke kasir / rekening resmi Benang Merah.</span>
+                  ) : (
+                    <span>*** Pembayaran telah diterima. Terima kasih telah mempercayakan ruang pemulihan Anda bersama Benang Merah ***</span>
+                  )}
                 </div>
               </div>
 
               <div className="flex space-x-2 print:hidden">
                 <button
                   onClick={executePrint}
-                  className="flex-1 py-2 bg-[#701A24] text-white font-semibold rounded-lg hover:bg-[#54121B] text-xs"
+                  className="flex-1 py-2.5 bg-[#701A24] text-white font-semibold rounded-lg hover:bg-[#54121B] text-xs flex items-center justify-center gap-1.5 shadow"
                 >
-                  🖨 Cetak / Print Struk Nota
+                  <ReceiptIcon /> Print {receiptType === 'invoice' ? 'Invoice Tagihan' : 'Struk Lunas (PAID)'}
                 </button>
               </div>
+
             </div>
           </div>
         )}
@@ -1218,29 +1542,29 @@ export default function App() {
     );
   }
 
-  // ---------------------------------------------------------------------
-  // TAMPILAN COMPANY PROFILE PUBLIK
-  // ---------------------------------------------------------------------
+  // ============================================================
+  // TAMPILAN COMPANY PROFILE PUBLIK (ELEGAN & ANIMATED TAILWIND)
+  // ============================================================
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans">
+    <div className="min-h-screen bg-[#FAF8F5] text-[#1E293B] font-sans selection:bg-[#701A24]/20 selection:text-[#701A24] overflow-x-hidden">
       
-      {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 bg-[#FDFBF7]/90 backdrop-blur-md border-b border-[#E2E8F0]">
+      {/* NAVBAR GLASSMORPHISM */}
+      <nav className="sticky top-0 z-50 bg-[#FAF8F5]/80 backdrop-blur-md border-b border-[#EADFD5] transition-all duration-300">
         <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#701A24]/10 flex items-center justify-center">
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="w-10 h-10 rounded-full bg-[#701A24]/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm">
               <HeartHandshakeIcon />
             </div>
-            <span className="font-serif text-xl font-bold tracking-tight text-[#1E293B]">
+            <span className="font-serif text-xl font-bold tracking-tight text-[#701A24]">
               Benang Merah
             </span>
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-[#475569]">
-            <a href="#layanan" className="hover:text-[#701A24] transition-colors">Layanan</a>
-            <a href="#proposal" className="hover:text-[#701A24] transition-colors">Proposal</a>
-            <a href="#psikolog" className="hover:text-[#701A24] transition-colors">Tim Kami</a>
-            <a href="#faq" className="hover:text-[#701A24] transition-colors">FAQ</a>
+            <a href="#layanan" className="hover:text-[#701A24] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-[#701A24] hover:after:w-full after:transition-all">Layanan</a>
+            <a href="#proposal" className="hover:text-[#701A24] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-[#701A24] hover:after:w-full after:transition-all">Proposal</a>
+            <a href="#psikolog" className="hover:text-[#701A24] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-[#701A24] hover:after:w-full after:transition-all">Tim Kami</a>
+            <a href="#faq" className="hover:text-[#701A24] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-[#701A24] hover:after:w-full after:transition-all">FAQ</a>
           </div>
 
           <div className="hidden md:flex items-center gap-3">
@@ -1248,14 +1572,14 @@ export default function App() {
               href={waUrl}
               target="_blank" 
               rel="noreferrer"
-              className="bg-[#701A24] hover:bg-[#54121B] text-white px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm hover:shadow"
+              className="bg-[#701A24] hover:bg-[#54121B] text-white px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5"
             >
               Konsultasi WhatsApp
             </a>
 
             <button
               onClick={() => setShowLoginModal(true)}
-              className="border border-[#701A24] text-[#701A24] hover:bg-[#701A24] hover:text-white px-4 py-2 rounded-full text-xs font-semibold transition-all"
+              className="border border-[#701A24] text-[#701A24] hover:bg-[#701A24] hover:text-white px-4 py-2 rounded-full text-xs font-semibold transition-all duration-300 hover:shadow-sm"
             >
               Login Tim
             </button>
@@ -1270,7 +1594,7 @@ export default function App() {
         </div>
 
         {isMenuOpen && (
-          <div className="md:hidden border-b border-[#E2E8F0] bg-[#FDFBF7] px-6 py-4 flex flex-col gap-4 text-sm font-medium">
+          <div className="md:hidden border-b border-[#EADFD5] bg-[#FAF8F5] px-6 py-4 flex flex-col gap-4 text-sm font-medium animate-fade-up">
             <a href="#layanan" onClick={() => setIsMenuOpen(false)}>Layanan</a>
             <a href="#proposal" onClick={() => setIsMenuOpen(false)}>Proposal</a>
             <a href="#psikolog" onClick={() => setIsMenuOpen(false)}>Tim Kami</a>
@@ -1279,7 +1603,7 @@ export default function App() {
               href={waUrl} 
               target="_blank" 
               rel="noreferrer"
-              className="bg-[#701A24] text-white text-center py-2.5 rounded-full font-medium"
+              className="bg-[#701A24] text-white text-center py-2.5 rounded-full font-medium shadow-sm"
             >
               Konsultasi WhatsApp
             </a>
@@ -1293,50 +1617,58 @@ export default function App() {
         )}
       </nav>
 
-      {/* HERO SECTION */}
-      <section className="py-20 md:py-28 px-6 max-w-6xl mx-auto">
+      {/* HERO SECTION WITH TAILWIND ANIMATION & GLOW */}
+      <section className="relative py-20 md:py-28 px-6 max-w-6xl mx-auto">
+        
+        {/* GLOW BACKGROUND ORNAMENTS */}
+        <div className="absolute top-10 left-10 w-72 h-72 bg-[#701A24]/10 rounded-full blur-3xl -z-10 animate-float pointer-events-none"></div>
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl -z-10 animate-float pointer-events-none"></div>
+
         <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 bg-[#701A24]/10 text-[#701A24] px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase mb-6">
+          <div className="animate-fade-up">
+            <div className="inline-flex items-center gap-2 bg-[#701A24]/10 text-[#701A24] px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase mb-6 shadow-sm border border-[#701A24]/20 backdrop-blur-sm">
               <ShieldCheckIcon /> 100% Kerahasiaan Terjaga
             </div>
-            <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal leading-[1.15] text-[#1E293B] mb-6">
+            <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal leading-[1.18] text-[#1E293B] mb-6">
               Ruang Aman untuk Mendengar, Memahami, & Menyembuhkan.
             </h1>
             <p className="text-[#64748B] text-base md:text-lg leading-relaxed mb-8 font-light">
-              Temukan Kembali Koneksimu
+              Temukan Kembali Koneksimu Bersama Layanan Psikologi & Kesehatan Mental Profesional.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a 
                 href={waUrl}
                 target="_blank" 
                 rel="noreferrer"
-                className="bg-[#701A24] hover:bg-[#54121B] text-white px-7 py-3.5 rounded-full font-medium text-center transition-all shadow-md hover:shadow-lg"
+                className="bg-[#701A24] hover:bg-[#54121B] text-white px-7 py-3.5 rounded-full font-medium text-center transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5"
               >
                 Jadwalkan Sesi Konseling
               </a>
               <a 
                 href="#proposal" 
-                className="border border-[#CBD5E1] hover:border-[#94A3B8] text-[#334155] px-7 py-3.5 rounded-full font-medium text-center transition-all bg-white/50"
+                className="border border-[#CBD5E1] hover:border-[#701A24]/40 text-[#334155] hover:text-[#701A24] px-7 py-3.5 rounded-full font-medium text-center transition-all duration-300 bg-white/60 backdrop-blur-sm shadow-sm"
               >
                 Pelajari Proposal
               </a>
             </div>
           </div>
-          <div className="relative">
-            <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl border border-[#E2E8F0]">
+
+          <div className="relative animate-fade-up">
+            <div className="aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border border-[#EADFD5] group">
               <img 
                 src="https://images.unsplash.com/photo-1544027993-37dbfe43562a?auto=format&fit=crop&q=80&w=1000" 
                 alt="Suasana Konseling" 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
               />
             </div>
-            <div className="absolute -bottom-6 -left-6 bg-white p-4 rounded-xl shadow-lg border border-[#E2E8F0] hidden sm:flex items-center gap-3">
+            
+            {/* FLOATING BADGE ELEGAN */}
+            <div className="absolute -bottom-6 -left-6 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-[#EADFD5] hidden sm:flex items-center gap-3 animate-float">
               <div className="w-10 h-10 rounded-full bg-[#701A24]/10 flex items-center justify-center">
                 <CheckIcon />
               </div>
               <div>
-                <p className="text-xs text-[#64748B]">Psikolog Terlisensi</p>
+                <p className="text-xs text-[#64748B] font-medium">Psikolog Terlisensi</p>
                 <p className="text-sm font-semibold text-[#1E293B]">S.Psi., M.Psi., Psikolog</p>
               </div>
             </div>
@@ -1344,31 +1676,31 @@ export default function App() {
         </div>
       </section>
 
-      {/* RATING KEPERCAYAAN */}
-      <section className="bg-white border-y border-[#E2E8F0] py-12 px-6">
+      {/* RATING KEPERCAYAAN DENGAN HOVER LIFT TAILWIND */}
+      <section className="bg-white border-y border-[#EADFD5] py-12 px-6 shadow-sm">
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div>
+          <div className="hover:-translate-y-1 transition-transform duration-300">
             <p className="font-serif text-3xl md:text-4xl font-bold text-[#701A24]">1,500+</p>
-            <p className="text-xs md:text-sm text-[#64748B] mt-1">Sesi Terfasilitasi</p>
+            <p className="text-xs md:text-sm text-[#64748B] mt-1 font-light">Sesi Terfasilitasi</p>
           </div>
-          <div>
+          <div className="hover:-translate-y-1 transition-transform duration-300">
             <p className="font-serif text-3xl md:text-4xl font-bold text-[#701A24]">100%</p>
-            <p className="text-xs md:text-sm text-[#64748B] mt-1">Privasi Klien Terjaga</p>
+            <p className="text-xs md:text-sm text-[#64748B] mt-1 font-light">Privasi Klien Terjaga</p>
           </div>
-          <div>
+          <div className="hover:-translate-y-1 transition-transform duration-300">
             <p className="font-serif text-3xl md:text-4xl font-bold text-[#701A24]">100%</p>
-            <p className="text-xs md:text-sm text-[#64748B] mt-1">Psikolog Terlisensi SIPP</p>
+            <p className="text-xs md:text-sm text-[#64748B] mt-1 font-light">Psikolog Terlisensi SIPP</p>
           </div>
-          <div>
+          <div className="hover:-translate-y-1 transition-transform duration-300">
             <p className="font-serif text-3xl md:text-4xl font-bold text-[#701A24]">4.9/5.0</p>
-            <p className="text-xs md:text-sm text-[#64748B] mt-1">Kepuasan Layanan</p>
+            <p className="text-xs md:text-sm text-[#64748B] mt-1 font-light">Kepuasan Layanan</p>
           </div>
         </div>
       </section>
 
-      {/* SERVICE LAYER */}
+      {/* SERVICE LAYER DENGAN KARTU INTERAKTIF */}
       <section id="layanan" className="py-20 px-6 max-w-6xl mx-auto">
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <div className="text-center max-w-2xl mx-auto mb-16 animate-fade-up">
           <h2 className="font-serif text-3xl md:text-4xl text-[#1E293B] mb-4">Layanan Konseling Kami</h2>
           <p className="text-[#64748B] text-sm md:text-base font-light">
             Dirancang khusus untuk membantu setiap tahapan proses pemulihan dan pertumbuhan kesehatan mental Anda.
@@ -1377,19 +1709,19 @@ export default function App() {
 
         <div className="grid md:grid-cols-3 gap-8">
           {services.map((srv, i) => (
-            <div key={i} className="bg-white p-8 rounded-2xl border border-[#E2E8F0] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+            <div key={i} className="bg-white p-8 rounded-3xl border border-[#EADFD5] shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between group">
               <div>
-                <div className="mb-6">
+                <div className="mb-6 p-3 bg-[#FAF8F5] rounded-2xl w-fit border border-[#EADFD5] group-hover:scale-110 transition-transform duration-300">
                   {srv.type === "user" && <UserCheckIcon />}
                   {srv.type === "heart" && <HeartHandshakeIcon />}
                   {srv.type === "shield" && <ShieldCheckIcon />}
                 </div>
-                <h3 className="font-serif text-xl font-medium text-[#1E293B] mb-3">{srv.title}</h3>
+                <h3 className="font-serif text-xl font-medium text-[#1E293B] mb-3 group-hover:text-[#701A24] transition-colors">{srv.title}</h3>
                 <p className="text-[#64748B] text-sm leading-relaxed mb-6 font-light">{srv.desc}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {srv.tags.map((tag, idx) => (
-                  <span key={idx} className="bg-[#F1F5F9] text-[#475569] text-xs px-2.5 py-1 rounded-md">
+                  <span key={idx} className="bg-[#FAF8F5] text-[#475569] text-xs px-3 py-1 rounded-full border border-[#EADFD5]/70 font-medium">
                     {tag}
                   </span>
                 ))}
@@ -1399,15 +1731,15 @@ export default function App() {
         </div>
       </section>
 
-      {/* SECTION PROPOSAL PELAYANAN (GOOGLE DRIVE LINK) */}
+      {/* PROPOSAL SECTION */}
       <section id="proposal" className="py-12 px-6 max-w-6xl mx-auto">
-        <div className="bg-gradient-to-r from-[#701A24] to-[#54121B] rounded-3xl p-8 md:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl">
-          <div className="space-y-3 max-w-2xl text-center md:text-left">
-            <span className="bg-white/10 text-red-200 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
+        <div className="bg-gradient-to-r from-[#701A24] via-[#5D151E] to-[#420E15] rounded-3xl p-8 md:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden">
+          <div className="space-y-3 max-w-2xl text-center md:text-left relative z-10">
+            <span className="bg-white/10 text-red-200 text-xs font-semibold px-3.5 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm border border-white/10">
               Dokumen Resmi
             </span>
-            <h2 className="font-serif text-2xl md:text-3xl font-bold">Proposal Pelayanan Benang Merah</h2>
-            <p className="text-red-100 text-xs md:text-sm leading-relaxed font-light">
+            <h2 className="font-serif text-2xl md:text-3xl font-bold tracking-tight">Proposal Pelayanan Benang Merah</h2>
+            <p className="text-red-100/90 text-xs md:text-sm leading-relaxed font-light">
               Pelajari selengkapnya mengenai detail program, alur pendampingan klinis, serta penawaran kerja sama layanan kesehatan mental kami.
             </p>
           </div>
@@ -1415,7 +1747,7 @@ export default function App() {
             href="https://drive.google.com/file/d/1IaaszVRamfvzgkKD1sMEYu_Q3pneQeAO/view?usp=drive_link" 
             target="_blank" 
             rel="noreferrer"
-            className="bg-white text-[#701A24] hover:bg-red-50 font-semibold px-6 py-3.5 rounded-full text-xs transition shadow-md whitespace-nowrap flex items-center gap-2"
+            className="bg-white text-[#701A24] hover:bg-red-50 font-semibold px-7 py-4 rounded-full text-xs transition-all duration-300 shadow-lg hover:shadow-2xl hover:-translate-y-0.5 whitespace-nowrap relative z-10"
           >
             📄 Buka & Download Proposal (PDF)
           </a>
@@ -1423,7 +1755,7 @@ export default function App() {
       </section>
 
       {/* STEP BY STEP */}
-      <section className="bg-[#F4F1EA] py-20 px-6 border-y border-[#E2E8F0]">
+      <section className="bg-[#FAF8F5] py-20 px-6 border-y border-[#EADFD5]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="font-serif text-3xl md:text-4xl text-[#1E293B] mb-4">Alur Memulai Konseling</h2>
@@ -1437,8 +1769,8 @@ export default function App() {
               { num: "03", title: "Atur Jadwal", desc: "Pilih tanggal dan jam sesi yang paling nyaman untuk Anda." },
               { num: "04", title: "Mulai Sesi", desc: "Lakukan konseling dalam suasana yang tenang dan rahasia." }
             ].map((step, i) => (
-              <div key={i} className="bg-white p-6 rounded-xl border border-[#E2E8F0] relative">
-                <span className="font-serif text-3xl font-bold text-[#701A24]/20 absolute top-4 right-4">{step.num}</span>
+              <div key={i} className="bg-white p-6 rounded-2xl border border-[#EADFD5] relative hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <span className="font-serif text-3xl font-bold text-[#701A24]/15 absolute top-4 right-4">{step.num}</span>
                 <h4 className="font-serif text-lg font-medium text-[#1E293B] mb-2">{step.title}</h4>
                 <p className="text-[#64748B] text-xs leading-relaxed font-light">{step.desc}</p>
               </div>
@@ -1449,13 +1781,6 @@ export default function App() {
 
       {/* TIM PROFESIONAL LENGKAP */}
       <section id="psikolog" className="py-20 px-6 max-w-6xl mx-auto relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none z-0 opacity-15 flex items-center justify-center">
-          <svg className="w-full h-full text-[#701A24]" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M-100 200 C 300 50, 400 650, 1300 400" stroke="currentColor" strokeWidth="6" strokeDasharray="12 12" />
-            <path d="M-50 500 C 400 800, 700 100, 1250 600" stroke="currentColor" strokeWidth="4" />
-          </svg>
-        </div>
-
         <div className="relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="font-serif text-3xl md:text-4xl text-[#1E293B] mb-4">Tim Profesional Kami</h2>
@@ -1464,17 +1789,16 @@ export default function App() {
             </p>
           </div>
 
-          {/* 1. PSIKOLOG UTAMA */}
           <div className="mb-16">
             <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">Psikolog Utama</h3>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               {psychologists.map((p, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-all">
+                <div key={i} className="bg-white rounded-3xl border border-[#EADFD5] overflow-hidden flex flex-col shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
                   <div className="w-full h-72 bg-[#701A24]/5 relative flex items-center justify-center overflow-hidden">
                     <img 
                       src={p.image} 
                       alt={p.name} 
-                      className="w-full h-full object-cover object-center relative z-10" 
+                      className="w-full h-full object-cover object-center relative z-10 group-hover:scale-105 transition-transform duration-500" 
                       onError={(e) => { e.target.style.display = 'none'; }} 
                     />
                     <div className="absolute z-0">
@@ -1482,8 +1806,8 @@ export default function App() {
                     </div>
                   </div>
                   <div className="p-6">
-                    <h4 className="font-serif text-lg font-bold text-[#1E293B]">{p.name}</h4>
-                    <p className="text-[#701A24] text-xs font-semibold uppercase mt-1 mb-2">{p.role}</p>
+                    <h4 className="font-serif text-lg font-bold text-[#1E293B] group-hover:text-[#701A24] transition-colors">{p.name}</h4>
+                    <p className="text-[#701A24] text-xs font-semibold uppercase mt-1 mb-2 tracking-wider">{p.role}</p>
                     <p className="text-[#64748B] text-xs font-light leading-relaxed">{p.spec}</p>
                   </div>
                 </div>
@@ -1491,17 +1815,16 @@ export default function App() {
             </div>
           </div>
 
-          {/* 2. TIM TERAPIS ANAK */}
           <div className="mb-16">
             <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">Tim Terapis Anak</h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {therapist.map((t, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-all">
+                <div key={i} className="bg-white rounded-3xl border border-[#EADFD5] overflow-hidden flex flex-col shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
                   <div className="w-full h-64 bg-[#701A24]/5 relative flex items-center justify-center overflow-hidden">
                     <img 
                       src={t.image} 
                       alt={t.name} 
-                      className="w-full h-full object-cover object-center relative z-10" 
+                      className="w-full h-full object-cover object-center relative z-10 group-hover:scale-105 transition-transform duration-500" 
                       onError={(e) => { e.target.style.display = 'none'; }} 
                     />
                     <div className="absolute z-0">
@@ -1509,8 +1832,8 @@ export default function App() {
                     </div>
                   </div>
                   <div className="p-5">
-                    <h4 className="font-serif text-base font-bold text-[#1E293B]">{t.name}</h4>
-                    <p className="text-[#701A24] text-[11px] font-semibold uppercase mt-1 mb-2">{t.role}</p>
+                    <h4 className="font-serif text-base font-bold text-[#1E293B] group-hover:text-[#701A24] transition-colors">{t.name}</h4>
+                    <p className="text-[#701A24] text-[11px] font-semibold uppercase mt-1 mb-2 tracking-wider">{t.role}</p>
                     <p className="text-[#64748B] text-xs font-light leading-relaxed">{t.spec}</p>
                   </div>
                 </div>
@@ -1518,17 +1841,16 @@ export default function App() {
             </div>
           </div>
 
-          {/* 3. IT & SISTEM DATA */}
           <div>
             <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">IT & Sistem Data</h3>
             <div className="max-w-md mx-auto">
               {itTeam.map((it, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-all">
+                <div key={i} className="bg-white rounded-3xl border border-[#EADFD5] overflow-hidden flex flex-col shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
                   <div className="w-full h-72 bg-[#701A24]/5 relative flex items-center justify-center overflow-hidden">
                     <img 
                       src={it.image} 
                       alt={it.name} 
-                      className="w-full h-full object-cover object-center relative z-10" 
+                      className="w-full h-full object-cover object-center relative z-10 group-hover:scale-105 transition-transform duration-500" 
                       onError={(e) => { e.target.style.display = 'none'; }} 
                     />
                     <div className="absolute z-0">
@@ -1536,8 +1858,8 @@ export default function App() {
                     </div>
                   </div>
                   <div className="p-6 text-center">
-                    <h4 className="font-serif text-lg font-bold text-[#1E293B]">{it.name}</h4>
-                    <p className="text-[#701A24] text-xs font-semibold uppercase mt-1 mb-2">{it.role}</p>
+                    <h4 className="font-serif text-lg font-bold text-[#1E293B] group-hover:text-[#701A24] transition-colors">{it.name}</h4>
+                    <p className="text-[#701A24] text-xs font-semibold uppercase mt-1 mb-2 tracking-wider">{it.role}</p>
                     <p className="text-[#64748B] text-xs font-light leading-relaxed">{it.spec}</p>
                   </div>
                 </div>
@@ -1548,7 +1870,7 @@ export default function App() {
       </section>
 
       {/* FAQ SECTION */}
-      <section id="faq" className="bg-white py-20 px-6 border-t border-[#E2E8F0]">
+      <section id="faq" className="bg-white py-20 px-6 border-t border-[#EADFD5]">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-serif text-3xl text-[#1E293B] mb-3">Pertanyaan Umum (FAQ)</h2>
@@ -1557,16 +1879,16 @@ export default function App() {
 
           <div className="space-y-4">
             {faqs.map((faq, idx) => (
-              <div key={idx} className="border border-[#E2E8F0] rounded-xl overflow-hidden">
+              <div key={idx} className="border border-[#EADFD5] rounded-2xl overflow-hidden transition-all duration-300">
                 <button 
                   onClick={() => toggleFaq(idx)}
-                  className="w-full text-left p-5 bg-[#FDFBF7] flex justify-between items-center font-medium text-sm text-[#1E293B]"
+                  className="w-full text-left p-5 bg-[#FAF8F5] flex justify-between items-center font-medium text-sm text-[#1E293B] hover:bg-white transition-colors"
                 >
                   <span>{faq.q}</span>
-                  <span className="text-[#701A24] font-bold">{openFaq === idx ? "▲" : "▼"}</span>
+                  <span className="text-[#701A24] font-bold transition-transform duration-300">{openFaq === idx ? "▲" : "▼"}</span>
                 </button>
                 {openFaq === idx && (
-                  <div className="p-5 bg-white text-xs md:text-sm text-[#64748B] border-t border-[#E2E8F0] leading-relaxed font-light">
+                  <div className="p-5 bg-white text-xs md:text-sm text-[#64748B] border-t border-[#EADFD5] leading-relaxed font-light animate-fade-up">
                     {faq.a}
                   </div>
                 )}
@@ -1593,7 +1915,7 @@ export default function App() {
             <p className="font-semibold text-white uppercase tracking-wider mb-2">Kontak Klinik</p>
             <p className="text-slate-400">📍 Perumahan Nuansa Majasem, Jl. Bandung, No. B9/16.</p>
             <p className="text-slate-400">📞 0822-9858-5310</p>
-            <p className="text-slate-400">✉️ benangmerahpsy@gmail.com</p>
+            <p className="text-slate-400">✉ benangmerahpsy@gmail.com</p>
           </div>
 
           <div className="space-y-3 text-xs">
@@ -1610,16 +1932,16 @@ export default function App() {
 
       {/* MODAL FORM LOGIN TIM */}
       {showLoginModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-up">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative border border-[#EADFD5]">
             <button 
               onClick={() => setShowLoginModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold transition-colors"
             >
               ✕
             </button>
-            <h3 className="text-xl font-bold text-gray-800 mb-1 text-center">Login Tim Benang Merah</h3>
-            <p className="text-xs text-gray-500 text-center mb-4">Akses Khusus 7 Anggota Tim Terdaftar</p>
+            <h3 className="text-xl font-bold text-gray-800 mb-1 text-center font-serif text-[#701A24]">Login Tim Benang Merah</h3>
+            <p className="text-xs text-gray-500 text-center mb-4 font-light">Akses Khusus 7 Anggota Tim Terdaftar</p>
             <Auth />
           </div>
         </div>

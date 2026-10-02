@@ -5,6 +5,7 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [fullName, setFullName] = useState('')
   const [role, setRole] = useState('admin') // Default 'admin'
   const [loading, setLoading] = useState(false)
@@ -47,9 +48,16 @@ export default function Auth() {
     <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl border border-gray-100">
       {/* HEADER LOGO & BRAND */}
       <div className="text-center mb-6">
-        <div className="w-12 h-12 bg-[#701A24] rounded-xl flex items-center justify-center text-white font-bold text-2xl mx-auto mb-2 shadow-md">
-          BM
-        </div>
+        <img 
+          src="/logo.png" 
+          alt="Logo Benang Merah" 
+          className="w-12 h-12 object-contain mx-auto mb-2 drop-shadow-md"
+          onError={(e) => {
+            // Fallback otomatis jika nama file di folder public adalah logo.jpeg
+            e.target.onerror = null;
+            e.target.src = "/logo.jpeg";
+          }}
+        />
         <h2 className="text-2xl font-bold text-gray-800">Portal Tim Benang Merah</h2>
         <p className="text-xs text-gray-500 mt-1">Akses Khusus Admin, Psikolog, Terapis & IT</p>
       </div>
@@ -94,7 +102,7 @@ export default function Auth() {
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full px-3.5 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#701A24] focus:border-transparent outline-none text-xs transition font-medium text-gray-800 bg-white"
               >
-                <option value="admin">Admin/Teapis</option>
+                <option value="admin">Admin Klinik</option>
                 <option value="psikolog">Psikolog</option>
                 <option value="terapis">Terapis</option>
                 <option value="it">IT & Sistem Data</option>
@@ -121,14 +129,37 @@ export default function Auth() {
           <label className="block text-xs font-semibold text-gray-700 mb-1">
             Kata Sandi / Password
           </label>
-          <input
-            type="password"
-            required
-            className="w-full px-3.5 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#701A24] focus:border-transparent outline-none text-xs transition"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              className="w-full px-3.5 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#701A24] focus:border-transparent outline-none text-xs transition pr-10"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            
+            {/* ICON MATA SVG ELEGAN & MINIMALIS */}
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-2.5 text-gray-400 hover:text-[#701A24] transition-colors focus:outline-none"
+              title={showPassword ? "Sembunyikan Kata Sandi" : "Tampilkan Kata Sandi"}
+            >
+              {showPassword ? (
+                // Icon Eye Off (Mata Coret)
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" />
+                </svg>
+              ) : (
+                // Icon Eye (Mata Terbuka)
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         <button
