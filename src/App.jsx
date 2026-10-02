@@ -849,7 +849,7 @@ export default function App() {
                 <div className="relative flex-1 max-w-xs">
                   <input
                     type="text"
-                    placeholder="🔍 Cari nama pasien (cth: Zehan)..."
+                    placeholder="🔍 Cari nama pasien (cth: Alfa)..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#701A24]"
@@ -921,7 +921,7 @@ export default function App() {
                             <p>
                               {/* SMART MASKING CATATAN MEDIS UNTUK ADMIN */}
                               {userRole === 'admin' || userRole === 'it_admin' 
-                                ? '[DISEMBUNYIKAN - RAHASIA MEDIS KLINIK]'
+                                ? 'PRIVACY MEDIS'
                                 : (item.notes || '-')}
                             </p>
                           </td>
