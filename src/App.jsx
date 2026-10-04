@@ -3,7 +3,7 @@ import { supabase } from './lib/supabase';
 import Auth from './components/Auth';
 
 // ============================================================
-// ELEGANT SVG ICON COMPONENTS (MINIMALIS & SLEEK)
+// ELEGANT SVG ICON COMPONENTS
 // ============================================================
 const HeartHandshakeIcon = () => (
   <svg className="w-6 h-6 text-[#701A24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
@@ -84,7 +84,6 @@ const SparklesIcon = () => (
 );
 
 const LIST_PSIKOLOG = ['M. Azka Maulana, M.Psi., Psikolog', 'Sofia Halida Fatma, M.Psi., Psikolog'];
-const LIST_TERAPIS = ['Shima Adinda Salsabil', 'Silviyah Wulandari', 'Nadifa A.M', 'Eka Zahra Nabila Nakhwa'];
 
 // Master Rate Card Overtime Sesi Konseling
 const OVERTIME_PASANGAN = [
@@ -127,6 +126,7 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [appointmentsList, setAppointmentsList] = useState([]);
+  const [activeTherapistList, setActiveTherapistList] = useState(['Shima Adinda Salsabil', 'Silviyah Wulandari', 'Nadifa A.M']);
   const [loadingAppts, setLoadingAppts] = useState(false);
   const [teamAccessDenied, setTeamAccessDenied] = useState(false);
 
@@ -143,7 +143,7 @@ export default function App() {
   const [patientAge, setPatientAge] = useState('');
   const [visitNumber, setVisitNumber] = useState(1);
   const [assignedPsychologist, setAssignedPsychologist] = useState(LIST_PSIKOLOG[0]);
-  const [directTherapist, setDirectTherapist] = useState(LIST_TERAPIS[0]);
+  const [directTherapist, setDirectTherapist] = useState('');
   const [directTherapyMethod, setDirectTherapyMethod] = useState('Play and Grow');
   const [bookingDate, setBookingDate] = useState('');
   const [bookingTime, setBookingTime] = useState('09:00');
@@ -181,6 +181,32 @@ export default function App() {
   // Form Progress Terapis
   const [therapyProgress, setTherapyProgress] = useState('');
 
+  // Fetch Terapis Aktif (Hanya role 'terapis')
+  const fetchActiveTherapists = async () => {
+    try {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('full_name, role');
+      
+      if (error) throw error;
+
+      if (profiles && profiles.length > 0) {
+        // HANYA FILTER ROLE 'terapis' (Admin / IT Admin tidak akan masuk)
+        const registeredTherapists = profiles
+          .filter(p => p.role === 'terapis')
+          .map(p => p.full_name)
+          .filter(Boolean);
+
+        if (registeredTherapists.length > 0) {
+          setActiveTherapistList(registeredTherapists);
+          if (!directTherapist) setDirectTherapist(registeredTherapists[0]);
+        }
+      }
+    } catch (err) {
+      console.error("Gagal mengambil terapis terdaftar:", err.message);
+    }
+  };
+
   // Validasi Maksimal 7 Anggota Tim
   const checkTeamLimit = async (currentSession) => {
     if (!currentSession) return;
@@ -204,11 +230,13 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       checkTeamLimit(session);
+      fetchActiveTherapists();
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       checkTeamLimit(session);
+      fetchActiveTherapists();
     });
 
     return () => subscription.unsubscribe();
@@ -218,10 +246,9 @@ export default function App() {
   const userRole = (rawRole === 'it' || rawRole === 'it_admin') ? 'it_admin' : rawRole;
   const userName = session?.user?.user_metadata?.full_name || 'Tim Benang Merah';
 
-  // LOGIKA SHIMA: Shima memegang akses Admin + Terapis
+  // LOGIKA SHIMA & TERAPIS DIFA
   const isShima = userName.toLowerCase().includes('shima');
   const canAccessAdminForm = userRole === 'admin' || userRole === 'it_admin' || (userRole === 'terapis' && isShima);
-  const canAccessTherapist = userRole === 'terapis' || userRole === 'it_admin';
 
   // Fetch Data Pasien dari Supabase
   const fetchAppointments = async () => {
@@ -252,6 +279,8 @@ export default function App() {
 
     try {
       const isDirect = registrationType === 'terapis_direct';
+      const selectedTherapist = isDirect ? (directTherapist || activeTherapistList[0]) : null;
+
       const initialNotes = isDirect 
         ? `[Klien: ${patientName} - HP: ${patientPhone}] (Layanan Langsung Terapis: ${directTherapyMethod})`
         : `[Klien: ${patientName} - HP: ${patientPhone}]`;
@@ -261,7 +290,7 @@ export default function App() {
           patient_name: patientName,
           doctor_name: isDirect ? 'Layanan Langsung Terapis' : assignedPsychologist,
           assigned_to: isDirect ? 'Layanan Langsung Terapis' : assignedPsychologist,
-          assigned_terapis: isDirect ? directTherapist : null,
+          assigned_terapis: selectedTherapist,
           booking_date: bookingDate,
           booking_time: bookingTime,
           status: isDirect ? 'dirujuk_terapis' : 'pending',
@@ -289,7 +318,7 @@ export default function App() {
     }
   };
 
-  // 2. EDIT DATA PENDAFTARAN (ADMIN & SHIMA)
+  // 2. EDIT DATA PENDAFTARAN
   const handleOpenEditModal = (item) => {
     setSelectedAppt(item);
     setEditPatientName(item.patient_name || '');
@@ -449,7 +478,6 @@ export default function App() {
               <th>Layanan</th>
               <th>Psikolog PJ</th>
               <th>Terapis PJ</th>
-              <th>Catatan Rekam Medis</th>
               <th>Biaya Admin</th>
               <th>Total Biaya</th>
               <th>Status</th>
@@ -469,7 +497,6 @@ export default function App() {
           <td>${(item.service_type || item.category || 'Belum diisi').toUpperCase()}</td>
           <td>${item.doctor_name || '-'}</td>
           <td>${item.assigned_terapis || 'Tidak Ada'}</td>
-          <td>[PRIVACY MEDIS]</td>
           <td>Rp ${(item.admin_fee || 30000).toLocaleString('id-ID')}</td>
           <td>Rp ${(item.price || 30000).toLocaleString('id-ID')}</td>
           <td>${(item.status || 'pending').toUpperCase()}</td>
@@ -490,9 +517,14 @@ export default function App() {
   };
 
   const handleDownloadTherapistExcel = () => {
-    const myPatients = appointmentsList.filter(item => 
-      item.assigned_terapis && item.assigned_terapis.toLowerCase().includes(userName.toLowerCase())
-    );
+    const currentNameLower = userName.toLowerCase();
+    const myPatients = appointmentsList.filter(item => {
+      if (!item.assigned_terapis) return false;
+      const assignedLower = item.assigned_terapis.toLowerCase();
+      return assignedLower.includes(currentNameLower) ||
+        (currentNameLower.includes('difa') && assignedLower.includes('nadifa')) ||
+        (currentNameLower.includes('nadifa') && assignedLower.includes('difa'));
+    });
 
     if (myPatients.length === 0) {
       alert(`Belum ada data pasien rujukan khusus untuk ${userName}.`);
@@ -874,15 +906,17 @@ export default function App() {
                         </div>
                         <div>
                           <label className="block font-medium text-blue-900 mb-1 font-semibold">
-                            Pilih Terapis Penanggung Jawab
+                            Pilih Terapis Aktif (Murni Terapis)
                           </label>
                           <select
                             value={directTherapist}
                             onChange={(e) => setDirectTherapist(e.target.value)}
-                            className="w-full px-3.5 py-2 border rounded-lg outline-none font-medium text-gray-800"
+                            className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg outline-none font-medium text-sm text-gray-800 bg-white shadow-sm focus:ring-2 focus:ring-blue-500"
                           >
-                            {LIST_TERAPIS.map((t, idx) => (
-                              <option key={idx} value={t}>{t}</option>
+                            {activeTherapistList.map((t, idx) => (
+                            <option key={idx} value={t} className="text-sm py-2 text-gray-800">
+                            {t}
+                            </option>
                             ))}
                           </select>
                         </div>
@@ -990,9 +1024,15 @@ export default function App() {
                         const isMyPsychologistPatient = item.doctor_name && 
                           item.doctor_name.toLowerCase().includes(userName.toLowerCase());
 
+                        // PENGECEKAN TERAPIS FLEKSIBEL (TERMASUK NADIFA / DIFA)
+                        const assignedLower = (item.assigned_terapis || '').toLowerCase();
+                        const currentNameLower = userName.toLowerCase();
+
                         const isMyTherapistPatient = item.assigned_terapis && (
-                          item.assigned_terapis.toLowerCase().includes(userName.toLowerCase()) ||
-                          (isShima && item.assigned_terapis.toLowerCase().includes('shima'))
+                          assignedLower.includes(currentNameLower) ||
+                          (currentNameLower.includes('difa') && assignedLower.includes('nadifa')) ||
+                          (currentNameLower.includes('nadifa') && assignedLower.includes('difa')) ||
+                          (isShima && assignedLower.includes('shima'))
                         );
 
                         let canReadNotes = false;
@@ -1213,14 +1253,14 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">Terapis Rujukan</label>
+                  <label className="block font-semibold text-gray-700 mb-1">Terapis Rujukan Aktif</label>
                   <select
                     value={editTherapist}
                     onChange={(e) => setEditTherapist(e.target.value)}
                     className="w-full p-2.5 border rounded-lg outline-none"
                   >
                     <option value="">-- Tanpa Terapis / Belum Dirujuk --</option>
-                    {LIST_TERAPIS.map((t, idx) => (
+                    {activeTherapistList.map((t, idx) => (
                       <option key={idx} value={t}>{t}</option>
                     ))}
                   </select>
@@ -1333,7 +1373,7 @@ export default function App() {
 
                 <div>
                   <label className="block font-semibold mb-1 text-[#701A24]">
-                    Rujuk Pasien Ini ke Terapis Anak Internal (Opsional):
+                    Rujuk Pasien Ini ke Terapis Aktif (Opsional):
                   </label>
                   <select
                     value={referToTherapist}
@@ -1341,7 +1381,7 @@ export default function App() {
                     className="w-full p-2.5 border border-[#701A24]/40 rounded-lg outline-none font-medium mb-2"
                   >
                     <option value="">-- Pilih Terapis Rujukan --</option>
-                    {LIST_TERAPIS.map((t, idx) => (
+                    {activeTherapistList.map((t, idx) => (
                       <option key={idx} value={t}>{t}</option>
                     ))}
                   </select>
@@ -1552,7 +1592,7 @@ export default function App() {
   }
 
   // ============================================================
-  // TAMPILAN COMPANY PROFILE PUBLIK (ELEGAN & ANIMATED TAILWIND)
+  // TAMPILAN COMPANY PROFILE PUBLIK
   // ============================================================
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1E293B] font-sans selection:bg-[#701A24]/20 selection:text-[#701A24] overflow-x-hidden">
@@ -1626,10 +1666,8 @@ export default function App() {
         )}
       </nav>
 
-      {/* HERO SECTION WITH TAILWIND ANIMATION & GLOW */}
+      {/* HERO SECTION */}
       <section className="relative py-20 md:py-28 px-6 max-w-6xl mx-auto">
-        
-        {/* GLOW BACKGROUND ORNAMENTS */}
         <div className="absolute top-10 left-10 w-72 h-72 bg-[#701A24]/10 rounded-full blur-3xl -z-10 animate-float pointer-events-none"></div>
         <div className="absolute bottom-10 right-10 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl -z-10 animate-float pointer-events-none"></div>
 
@@ -1670,8 +1708,6 @@ export default function App() {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
               />
             </div>
-            
-            {/* FLOATING BADGE ELEGAN */}
             <div className="absolute -bottom-6 -left-6 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-[#EADFD5] hidden sm:flex items-center gap-3 animate-float">
               <div className="w-10 h-10 rounded-full bg-[#701A24]/10 flex items-center justify-center">
                 <CheckIcon />
@@ -1685,7 +1721,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* RATING KEPERCAYAAN DENGAN HOVER LIFT TAILWIND */}
+      {/* RATING KEPERCAYAAN */}
       <section className="bg-white border-y border-[#EADFD5] py-12 px-6 shadow-sm">
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <div className="hover:-translate-y-1 transition-transform duration-300">
@@ -1707,7 +1743,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* SERVICE LAYER DENGAN KARTU INTERAKTIF */}
+      {/* SERVICE LAYER */}
       <section id="layanan" className="py-20 px-6 max-w-6xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-16 animate-fade-up">
           <h2 className="font-serif text-3xl md:text-4xl text-[#1E293B] mb-4">Layanan Konseling Kami</h2>
