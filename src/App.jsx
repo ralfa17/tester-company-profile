@@ -646,6 +646,15 @@ export default function App() {
     }
   ];
 
+  const creatorTeam = [
+    {
+      name: "Fauzan Hamdani",
+      role: "CONTENT CREATOR & MEDIA",
+      spec: "Merancang dan memproduksi konten kreatif visual serta media edukasi kesehatan mental untuk memperluas jangkauan layanan Benang Merah.",
+      image: "/fauzan.jpeg"
+    }
+  ];
+
   const faqs = [
     {
       q: "Apakah kerahasiaan sesi konseling saya terjamin?",
@@ -1789,6 +1798,7 @@ export default function App() {
             </p>
           </div>
 
+          {/* PSIKOLOG UTAMA */}
           <div className="mb-16">
             <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">Psikolog Utama</h3>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -1815,6 +1825,7 @@ export default function App() {
             </div>
           </div>
 
+          {/* TERAPIS ANAK */}
           <div className="mb-16">
             <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">Tim Terapis Anak</h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1841,7 +1852,8 @@ export default function App() {
             </div>
           </div>
 
-          <div>
+          {/* IT & SISTEM DATA */}
+          <div className="mb-16">
             <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">IT & Sistem Data</h3>
             <div className="max-w-md mx-auto">
               {itTeam.map((it, i) => (
@@ -1866,6 +1878,34 @@ export default function App() {
               ))}
             </div>
           </div>
+
+          {/* CONTENT CREATOR */}
+          <div>
+            <h3 className="text-center font-serif text-2xl font-bold text-[#701A24] mb-8">Content Creator</h3>
+            <div className="max-w-md mx-auto">
+              {creatorTeam.map((c, i) => (
+                <div key={i} className="bg-white rounded-3xl border border-[#EADFD5] overflow-hidden flex flex-col shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+                  <div className="w-full h-72 bg-[#701A24]/5 relative flex items-center justify-center overflow-hidden">
+                    <img 
+                      src={c.image} 
+                      alt={c.name} 
+                      className="w-full h-full object-cover object-center relative z-10 group-hover:scale-105 transition-transform duration-500" 
+                      onError={(e) => { e.target.style.display = 'none'; }} 
+                    />
+                    <div className="absolute z-0">
+                      <PersonAvatarIcon />
+                    </div>
+                  </div>
+                  <div className="p-6 text-center">
+                    <h4 className="font-serif text-lg font-bold text-[#1E293B] group-hover:text-[#701A24] transition-colors">{c.name}</h4>
+                    <p className="text-[#701A24] text-xs font-semibold uppercase mt-1 mb-2 tracking-wider">{c.role}</p>
+                    <p className="text-[#64748B] text-xs font-light leading-relaxed">{c.spec}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
       </section>
 
