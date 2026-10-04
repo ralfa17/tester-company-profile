@@ -2,33 +2,53 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    
-    <!-- Favicon Browser (PC & Tab HP) -->
-    <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- PWA Primary Meta Tags -->
-    <title>Klinik Psikologi Benang Merah</title>
-    <meta name="title" content="Klinik Psikologi Benang Merah" />
-    <meta name="description" content="Sistem Rekam Medis & Layanan Klinik Psikologi Benang Merah" />
     <meta name="theme-color" content="#2563eb" />
 
-    <!-- iOS / Apple PWA Support (iPhone & iPad) -->
+    <!-- Favicon Browser & Apple PWA -->
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
+
+    <!-- Primary SEO Meta Tags (Agar Muncul di Google) -->
+    <title>Benang Merah Psy | Klinik & Layanan Psikologi</title>
+    <meta name="title" content="Benang Merah Psy | Klinik & Layanan Psikologi" />
+    <meta name="description" content="Official website Benang Merah Psy. Layanan rekam medis, edukasi, psikologi, dan konseling kesehatan mental terpercaya." />
+    <meta name="keywords" content="Benang Merah Psy, benangmerahpsy, benang merah, klinik psikologi, konseling, kesehatan mental, rekam medis psikologi" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph / Facebook / WhatsApp Preview Link -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://benangmerahpsy.id/" />
+    <meta property="og:title" content="Benang Merah Psy | Klinik & Layanan Psikologi" />
+    <meta property="og:description" content="Official website Benang Merah Psy. Layanan rekam medis, edukasi, psikologi, dan konseling kesehatan mental terpercaya." />
+    <meta property="og:image" content="https://benangmerahpsy.id/logo.png" />
+
+    <!-- Twitter / X Card Preview -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://benangmerahpsy.id/" />
+    <meta property="twitter:title" content="Benang Merah Psy | Klinik & Layanan Psikologi" />
+    <meta property="twitter:description" content="Official website Benang Merah Psy. Layanan rekam medis, edukasi, psikologi, dan konseling kesehatan mental terpercaya." />
+    <meta property="twitter:image" content="https://benangmerahpsy.id/logo.png" />
+
+    <!-- iOS / Apple PWA Support -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Benang Merah" />
-    <link rel="apple-touch-icon" href="/logo.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.log('SW registration failed: ', err);
+          });
+        });
+      }
+    </script>
   </body>
-  <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js');
-    });
-  }
-</script>
 </html>
