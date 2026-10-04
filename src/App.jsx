@@ -126,7 +126,7 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [appointmentsList, setAppointmentsList] = useState([]);
-  const [activeTherapistList, setActiveTherapistList] = useState(['Shima Adinda Salsabil', 'Silviyah Wulandari', 'Nadifa A.M']);
+  const [activeTherapistList, setActiveTherapistList] = useState([]);
   const [loadingAppts, setLoadingAppts] = useState(false);
   const [teamAccessDenied, setTeamAccessDenied] = useState(false);
 
@@ -181,7 +181,7 @@ export default function App() {
   // Form Progress Terapis
   const [therapyProgress, setTherapyProgress] = useState('');
 
-  // Fetch Terapis Aktif (Hanya role 'terapis')
+  // Fetch Terapis Aktif dari Database Supabase (Hanya yang SUDAH TERDAFTAR + Akun Shima)
   const fetchActiveTherapists = async () => {
     try {
       const { data: profiles, error } = await supabase
@@ -191,15 +191,19 @@ export default function App() {
       if (error) throw error;
 
       if (profiles && profiles.length > 0) {
-        // HANYA FILTER ROLE 'terapis' (Admin / IT Admin tidak akan masuk)
         const registeredTherapists = profiles
-          .filter(p => p.role === 'terapis')
+          .filter(p => {
+            const nameLower = (p.full_name || '').toLowerCase();
+            const isShimaAccount = nameLower.includes('shima') || nameLower.includes('sima');
+            // Hanya masukkan akun yang SUDAH TERDAFTAR sebagai role 'terapis' ATAU akun Shima
+            return p.role === 'terapis' || isShimaAccount;
+          })
           .map(p => p.full_name)
           .filter(Boolean);
 
-        if (registeredTherapists.length > 0) {
-          setActiveTherapistList(registeredTherapists);
-          if (!directTherapist) setDirectTherapist(registeredTherapists[0]);
+        setActiveTherapistList(registeredTherapists);
+        if (registeredTherapists.length > 0 && !directTherapist) {
+          setDirectTherapist(registeredTherapists[0]);
         }
       }
     } catch (err) {
@@ -247,7 +251,7 @@ export default function App() {
   const userName = session?.user?.user_metadata?.full_name || 'Tim Benang Merah';
 
   // LOGIKA SHIMA & TERAPIS DIFA
-  const isShima = userName.toLowerCase().includes('shima');
+  const isShima = userName.toLowerCase().includes('shima') || userName.toLowerCase().includes('sima');
   const canAccessAdminForm = userRole === 'admin' || userRole === 'it_admin' || (userRole === 'terapis' && isShima);
 
   // Fetch Data Pasien dari Supabase
@@ -523,7 +527,8 @@ export default function App() {
       const assignedLower = item.assigned_terapis.toLowerCase();
       return assignedLower.includes(currentNameLower) ||
         (currentNameLower.includes('difa') && assignedLower.includes('nadifa')) ||
-        (currentNameLower.includes('nadifa') && assignedLower.includes('difa'));
+        (currentNameLower.includes('nadifa') && assignedLower.includes('difa')) ||
+        (isShima && (assignedLower.includes('shima') || assignedLower.includes('sima')));
     });
 
     if (myPatients.length === 0) {
@@ -904,20 +909,24 @@ export default function App() {
                             <option value="Play and Grow & Pra Literasi">Play and Grow & Pra Literasi</option>
                           </select>
                         </div>
-                        <div>
-                          <label className="block font-medium text-blue-900 mb-1 font-semibold">
-                            Pilih Terapis Aktif (Murni Terapis)
+                        <div className="text-sm">
+                          <label className="block font-medium text-blue-900 mb-1 font-semibold text-xs">
+                            Pilih Terapis Penanggung Jawab
                           </label>
                           <select
                             value={directTherapist}
                             onChange={(e) => setDirectTherapist(e.target.value)}
                             className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg outline-none font-medium text-sm text-gray-800 bg-white shadow-sm focus:ring-2 focus:ring-blue-500"
                           >
-                            {activeTherapistList.map((t, idx) => (
-                            <option key={idx} value={t} className="text-sm py-2 text-gray-800">
-                            {t}
-                            </option>
-                            ))}
+                            {activeTherapistList.length === 0 ? (
+                              <option value="">-- Memuat Terapis Aktif... --</option>
+                            ) : (
+                              activeTherapistList.map((t, idx) => (
+                                <option key={idx} value={t} className="text-sm py-2 text-gray-800">
+                                  {t}
+                                </option>
+                              ))
+                            )}
                           </select>
                         </div>
                       </div>
@@ -1024,7 +1033,7 @@ export default function App() {
                         const isMyPsychologistPatient = item.doctor_name && 
                           item.doctor_name.toLowerCase().includes(userName.toLowerCase());
 
-                        // PENGECEKAN TERAPIS FLEKSIBEL (TERMASUK NADIFA / DIFA)
+                        // PENGECEKAN TERAPIS FLEKSIBEL (TERMASUK NADIFA / DIFA & SHIMA)
                         const assignedLower = (item.assigned_terapis || '').toLowerCase();
                         const currentNameLower = userName.toLowerCase();
 
@@ -1032,7 +1041,7 @@ export default function App() {
                           assignedLower.includes(currentNameLower) ||
                           (currentNameLower.includes('difa') && assignedLower.includes('nadifa')) ||
                           (currentNameLower.includes('nadifa') && assignedLower.includes('difa')) ||
-                          (isShima && assignedLower.includes('shima'))
+                          (isShima && (assignedLower.includes('shima') || assignedLower.includes('sima')))
                         );
 
                         let canReadNotes = false;
@@ -1257,11 +1266,11 @@ export default function App() {
                   <select
                     value={editTherapist}
                     onChange={(e) => setEditTherapist(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg outline-none"
+                    className="w-full p-2.5 border border-gray-300 rounded-lg outline-none font-medium text-sm text-gray-800 bg-white"
                   >
                     <option value="">-- Tanpa Terapis / Belum Dirujuk --</option>
                     {activeTherapistList.map((t, idx) => (
-                      <option key={idx} value={t}>{t}</option>
+                      <option key={idx} value={t} className="text-sm py-1.5 text-gray-800">{t}</option>
                     ))}
                   </select>
                 </div>
@@ -1378,11 +1387,11 @@ export default function App() {
                   <select
                     value={referToTherapist}
                     onChange={(e) => setReferToTherapist(e.target.value)}
-                    className="w-full p-2.5 border border-[#701A24]/40 rounded-lg outline-none font-medium mb-2"
+                    className="w-full p-2.5 border border-[#701A24]/40 rounded-lg outline-none font-medium mb-2 text-sm bg-white"
                   >
                     <option value="">-- Pilih Terapis Rujukan --</option>
                     {activeTherapistList.map((t, idx) => (
-                      <option key={idx} value={t}>{t}</option>
+                      <option key={idx} value={t} className="text-sm py-1.5">{t}</option>
                     ))}
                   </select>
                 </div>
