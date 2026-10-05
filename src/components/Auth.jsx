@@ -78,8 +78,8 @@ const TEAM_MEMBERS = [
     shortName: 'Eka',
     role: 'Terapis Anak',
     dbRole: 'terapis',
-    email: 'ekazahranabilanakhwa@gmail.com',
-    hasAccount: false, // Opsi pendaftaran akan muncul untuk Eka
+    email: 'ekazahra687@gmail.com',
+    hasAccount: true,
     icon: <UserProfileIcon />
   },
   {
