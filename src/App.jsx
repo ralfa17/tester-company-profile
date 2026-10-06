@@ -83,7 +83,17 @@ const SparklesIcon = () => (
   </svg>
 );
 
-const LIST_PSIKOLOG = ['M. Azka Maulana, M.Psi., Psikolog', 'Sofia Halida Fatma, M.Psi., Psikolog'];
+// MASTER DATA PSIKOLOG DENGAN LABEL NAMA BERGELAR & KATA KUNCI MATCHING
+const LIST_PSIKOLOG = [
+  { 
+    label: 'M. Azka Maulana, M.Psi., Psikolog', 
+    keywords: ['azka', 'maulana']
+  },
+  { 
+    label: 'Sofia Halida Fatma, M.Psi., Psikolog', 
+    keywords: ['sofia', 'halida']
+  }
+];
 
 // Master Rate Card Overtime Sesi Konseling
 const OVERTIME_PASANGAN = [
@@ -142,7 +152,7 @@ export default function App() {
   const [patientPhone, setPatientPhone] = useState('');
   const [patientAge, setPatientAge] = useState('');
   const [visitNumber, setVisitNumber] = useState(1);
-  const [assignedPsychologist, setAssignedPsychologist] = useState(LIST_PSIKOLOG[0]);
+  const [assignedPsychologist, setAssignedPsychologist] = useState(LIST_PSIKOLOG[0].label);
   const [directTherapist, setDirectTherapist] = useState('');
   const [directTherapyMethod, setDirectTherapyMethod] = useState('Play and Grow');
   const [bookingDate, setBookingDate] = useState('');
@@ -181,7 +191,7 @@ export default function App() {
   // Form Progress Terapis
   const [therapyProgress, setTherapyProgress] = useState('');
 
-  // Fetch Terapis Aktif dari Database Supabase (Hanya yang SUDAH TERDAFTAR + Akun Shima)
+  // Fetch Terapis Aktif dari Database Supabase
   const fetchActiveTherapists = async () => {
     try {
       const { data: profiles, error } = await supabase
@@ -195,7 +205,6 @@ export default function App() {
           .filter(p => {
             const nameLower = (p.full_name || '').toLowerCase();
             const isShimaAccount = nameLower.includes('shima') || nameLower.includes('sima');
-            // Hanya masukkan akun yang SUDAH TERDAFTAR sebagai role 'terapis' ATAU akun Shima
             return p.role === 'terapis' || isShimaAccount;
           })
           .map(p => p.full_name)
@@ -248,9 +257,9 @@ export default function App() {
 
   const rawRole = session?.user?.user_metadata?.role || 'admin';
   const userRole = (rawRole === 'it' || rawRole === 'it_admin') ? 'it_admin' : rawRole;
-  const userName = session?.user?.user_metadata?.full_name || 'Tim Benang Merah';
+  const userName = session?.user?.user_metadata?.full_name || session?.user?.email || 'Tim Benang Merah';
 
-  // LOGIKA SHIMA & TERAPIS DIFA
+  // LOGIKA SHIMA & TERAPIS
   const isShima = userName.toLowerCase().includes('shima') || userName.toLowerCase().includes('sima');
   const canAccessAdminForm = userRole === 'admin' || userRole === 'it_admin' || (userRole === 'terapis' && isShima);
 
@@ -331,7 +340,7 @@ export default function App() {
     setEditBookingDate(item.booking_date || '');
     setEditBookingTime(item.booking_time || '09:00');
     setEditAdminFee(item.admin_fee || 30000);
-    setEditPsychologist(item.doctor_name || LIST_PSIKOLOG[0]);
+    setEditPsychologist(item.doctor_name || LIST_PSIKOLOG[0].label);
     setEditTherapist(item.assigned_terapis || '');
     setShowEditModal(true);
   };
@@ -889,7 +898,7 @@ export default function App() {
                           className="w-full px-3.5 py-2 border border-[#701A24]/30 bg-red-50/20 rounded-lg outline-none font-medium text-gray-800 focus:ring-2 focus:ring-[#701A24]"
                         >
                           {LIST_PSIKOLOG.map((p, idx) => (
-                            <option key={idx} value={p}>{p}</option>
+                            <option key={idx} value={p.label}>{p.label}</option>
                           ))}
                         </select>
                       </div>
@@ -1030,12 +1039,20 @@ export default function App() {
                       {filteredAppointments.map((item) => {
                         const isDirectTherapy = item.doctor_name === 'Layanan Langsung Terapis';
                         
-                        const isMyPsychologistPatient = item.doctor_name && 
-                          item.doctor_name.toLowerCase().includes(userName.toLowerCase());
-
-                        // PENGECEKAN TERAPIS FLEKSIBEL (TERMASUK NADIFA / DIFA & SHIMA)
-                        const assignedLower = (item.assigned_terapis || '').toLowerCase();
+                        const docLower = (item.doctor_name || '').toLowerCase();
                         const currentNameLower = userName.toLowerCase();
+
+                        // PENGECEKAN FLEXIBLE MATCHING PSIKOLOG
+                        const isMyPsychologistPatient = item.doctor_name && (
+                          LIST_PSIKOLOG.some((p) => {
+                            const matchesUser = p.keywords.some((key) => currentNameLower.includes(key));
+                            const matchesDoc = p.keywords.some((key) => docLower.includes(key));
+                            return matchesUser && matchesDoc;
+                          }) || docLower.includes(currentNameLower)
+                        );
+
+                        // PENGECEKAN TERAPIS FLEKSIBEL
+                        const assignedLower = (item.assigned_terapis || '').toLowerCase();
 
                         const isMyTherapistPatient = item.assigned_terapis && (
                           assignedLower.includes(currentNameLower) ||
@@ -1047,11 +1064,9 @@ export default function App() {
                         let canReadNotes = false;
                         let hiddenReason = '[PRIVACY MEDIS]';
 
+                        // PERATURAN PRIVASI MEDIS REKAM MEDIS
                         if (userRole === 'psikolog') {
-                          if (isDirectTherapy) {
-                            canReadNotes = false;
-                            hiddenReason = '[PRIVACY MEDIS]';
-                          } else if (isMyPsychologistPatient) {
+                          if (!isDirectTherapy && isMyPsychologistPatient) {
                             canReadNotes = true;
                           } else {
                             canReadNotes = false;
@@ -1065,6 +1080,7 @@ export default function App() {
                             hiddenReason = '[PRIVACY MEDIS]';
                           }
                         } else {
+                          // Admin biasa / IT Admin / role lainnya
                           canReadNotes = false;
                           hiddenReason = '[PRIVACY MEDIS]';
                         }
@@ -1256,7 +1272,7 @@ export default function App() {
                     className="w-full p-2.5 border rounded-lg outline-none"
                   >
                     {LIST_PSIKOLOG.map((p, idx) => (
-                      <option key={idx} value={p}>{p}</option>
+                      <option key={idx} value={p.label}>{p.label}</option>
                     ))}
                   </select>
                 </div>
