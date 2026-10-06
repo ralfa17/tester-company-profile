@@ -167,6 +167,7 @@ export default function App() {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [receiptType, setReceiptType] = useState('paid');
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   // Form State Edit Pasien
   const [editPatientName, setEditPatientName] = useState('');
@@ -451,7 +452,7 @@ export default function App() {
     }
   };
 
-  // PRINT NOTA PEMBAYARAN KLINIK
+  // PRINT & DOWNLOAD NOTA PEMBAYARAN KLINIK
   const handlePrintReceipt = (appt) => {
     setSelectedAppt(appt);
     setShowReceiptModal(true);
@@ -459,6 +460,43 @@ export default function App() {
 
   const executePrint = () => {
     window.print();
+  };
+
+  // FUNGSI OTO-DOWNLOAD NOTA / INVOICE SEBAGAI PDF
+  const executeDownloadPdf = async () => {
+    const element = document.getElementById('printable-receipt');
+    if (!element) return;
+    setIsDownloadingPdf(true);
+
+    try {
+      // Load library html2pdf dinamis via CDN jika belum ada
+      if (!window.html2pdf) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+          script.onload = resolve;
+          script.onerror = reject;
+          document.body.appendChild(script);
+        });
+      }
+
+      const patientCleanName = (selectedAppt?.patient_name || 'Pasien').replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `${receiptType.toUpperCase()}_BenangMerah_${patientCleanName}_${selectedAppt?.booking_date || ''}.pdf`;
+
+      const opt = {
+        margin:       0.3,
+        filename:     filename,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'in', format: 'a5', orientation: 'portrait' }
+      };
+
+      await window.html2pdf().set(opt).from(element).save();
+    } catch (err) {
+      alert(`Gagal mengunduh PDF: ${err.message}`);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
   // EXCEL DOWNLOAD KEUANGAN
@@ -1482,7 +1520,7 @@ export default function App() {
               
               <div className="flex justify-between items-center border-b pb-3 print:hidden">
                 <h3 className="font-bold text-gray-800 text-sm flex items-center gap-1.5 text-[#701A24]">
-                  <ReceiptIcon /> Cetak Struk & Invoice
+                  <ReceiptIcon /> Cetak & Download Nota
                 </h3>
                 <button onClick={() => setShowReceiptModal(false)} className="text-gray-400 font-bold hover:text-gray-600">✕</button>
               </div>
@@ -1510,7 +1548,8 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="p-5 border border-dashed border-[#EADFD5] rounded-2xl space-y-3 font-mono bg-[#FAF8F5] relative overflow-hidden">
+              {/* AREA STRUK/INVOICE YANG BISA DI-PRINT & DI-DOWNLOAD HASIL PDF */}
+              <div id="printable-receipt" className="p-5 border border-dashed border-[#EADFD5] rounded-2xl space-y-3 font-mono bg-[#FAF8F5] relative overflow-hidden">
                 
                 {receiptType === 'paid' && (
                   <div className="absolute right-4 bottom-10 pointer-events-none transform -rotate-12 opacity-90">
@@ -1599,12 +1638,20 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="flex space-x-2 print:hidden">
+              {/* DUA TOMBOL AKSI: PRINT DAN DOWNLOAD PDF */}
+              <div className="grid grid-cols-2 gap-2 print:hidden">
                 <button
                   onClick={executePrint}
-                  className="flex-1 py-2.5 bg-[#701A24] text-white font-semibold rounded-lg hover:bg-[#54121B] text-xs flex items-center justify-center gap-1.5 shadow"
+                  className="py-2.5 bg-gray-800 text-white font-semibold rounded-lg hover:bg-gray-900 text-xs flex items-center justify-center gap-1.5 shadow transition"
                 >
-                  <ReceiptIcon /> Print {receiptType === 'invoice' ? 'Invoice Tagihan' : 'Struk Lunas (PAID)'}
+                  <ReceiptIcon /> Print Nota
+                </button>
+                <button
+                  onClick={executeDownloadPdf}
+                  disabled={isDownloadingPdf}
+                  className="py-2.5 bg-[#701A24] text-white font-semibold rounded-lg hover:bg-[#54121B] text-xs flex items-center justify-center gap-1.5 shadow transition"
+                >
+                  <DownloadChartIcon /> {isDownloadingPdf ? 'Mengunduh...' : 'Download PDF'}
                 </button>
               </div>
 
