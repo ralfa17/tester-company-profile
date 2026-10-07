@@ -146,6 +146,9 @@ export default function App() {
   // Master Biaya & Setting Tarif Admin
   const [adminFeeInput, setAdminFeeInput] = useState(30000);
 
+  // Path QR Code Pembayaran (Taruh file qr di folder public)
+  const qrCodeUrl = "/qris.jpeg";
+
   // State Form Input Pasien Baru
   const [registrationType, setRegistrationType] = useState('psikolog');
   const [patientName, setPatientName] = useState('');
@@ -166,8 +169,7 @@ export default function App() {
   const [showTherapyModal, setShowTherapyModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [receiptType, setReceiptType] = useState('paid');
-  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [receiptType, setReceiptType] = useState('invoice'); // 'invoice' atau 'paid'
 
   // Form State Edit Pasien
   const [editPatientName, setEditPatientName] = useState('');
@@ -373,7 +375,7 @@ export default function App() {
     }
   };
 
-  // 3. PSIKOLOG: Input Anamnesa & Diagnosa
+  // 3. PSIKOLOG: Input Anamnesa & Diagnosa (Selesai Sesi -> Tampil Invoice)
   const handleSavePsychologistRecord = async () => {
     if (!selectedAppt) return;
     try {
@@ -396,18 +398,27 @@ export default function App() {
         ` Rancangan Tindak Lanjut: ${followUpPlan}\n` +
         ` ${rujukanText}`;
 
-      const { error } = await supabase.from('appointments').update({
+      const updatedData = {
         notes: `${selectedAppt.notes}\n\n${medicalLog}`,
         status: referToTherapist ? 'dirujuk_terapis' : 'selesai_konseling',
         assigned_terapis: referToTherapist || null,
         service_type: `${serviceType} (${durationLabel})`,
         category: serviceType,
         price: totalPrice
-      }).eq('id', selectedAppt.id);
+      };
+
+      const { error } = await supabase.from('appointments').update(updatedData).eq('id', selectedAppt.id);
 
       if (error) throw error;
-      alert("Rekam medis berhasil disimpan!");
+      alert("Sesi telah selesai & Rekam medis berhasil disimpan! Menampilkan Invoice Pembayaran...");
       setShowMedicalModal(false);
+
+      // Buka Otomatis Modal Nota/Invoice dengan QRIS Pembayaran
+      const updatedAppt = { ...selectedAppt, ...updatedData };
+      setSelectedAppt(updatedAppt);
+      setReceiptType('invoice');
+      setShowReceiptModal(true);
+
       setAnamnesaNotes('');
       setDiagnosis('');
       setFollowUpPlan('');
@@ -452,51 +463,267 @@ export default function App() {
     }
   };
 
-  // PRINT & DOWNLOAD NOTA PEMBAYARAN KLINIK
-  const handlePrintReceipt = (appt) => {
-    setSelectedAppt(appt);
+  // BUKA MODAL NOTA
+  const handlePrintReceipt = (item) => {
+    setSelectedAppt(item);
+    setReceiptType(item.status === 'lunas' ? 'paid' : 'invoice');
     setShowReceiptModal(true);
   };
 
-  const executePrint = () => {
-    window.print();
+  // TANDAI PEMBAYARAN SUDAH LUNAS
+  const handleMarkAsPaid = async () => {
+    if (!selectedAppt) return;
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'lunas' })
+        .eq('id', selectedAppt.id);
+
+      if (error) throw error;
+
+      alert("Pembayaran terverifikasi! Berubah menjadi Nota Bukti Lunas.");
+      setReceiptType('paid');
+      setSelectedAppt({ ...selectedAppt, status: 'lunas' });
+      fetchAppointments();
+    } catch (err) {
+      alert(`Gagal mengupdate status: ${err.message}`);
+    }
   };
 
-  // FUNGSI OTO-DOWNLOAD NOTA / INVOICE SEBAGAI PDF
-  const executeDownloadPdf = async () => {
-    const element = document.getElementById('printable-receipt');
-    if (!element) return;
-    setIsDownloadingPdf(true);
-
-    try {
-      // Load library html2pdf dinamis via CDN jika belum ada
-      if (!window.html2pdf) {
-        await new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-          script.onload = resolve;
-          script.onerror = reject;
-          document.body.appendChild(script);
-        });
-      }
-
-      const patientCleanName = (selectedAppt?.patient_name || 'Pasien').replace(/[^a-zA-Z0-9]/g, '_');
-      const filename = `${receiptType.toUpperCase()}_BenangMerah_${patientCleanName}_${selectedAppt?.booking_date || ''}.pdf`;
-
-      const opt = {
-        margin:       0.3,
-        filename:     filename,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'in', format: 'a5', orientation: 'portrait' }
-      };
-
-      await window.html2pdf().set(opt).from(element).save();
-    } catch (err) {
-      alert(`Gagal mengunduh PDF: ${err.message}`);
-    } finally {
-      setIsDownloadingPdf(false);
+  // FUNGSI KIRIM WA RECEIPT / NOTA LANGSUNG KE CLIENT
+  const sendWaReceipt = () => {
+    if (!selectedAppt) return;
+    
+    // Ekstrak Nomor HP jika tertera di catatan
+    const phoneMatch = selectedAppt.notes && selectedAppt.notes.match(/HP:\s*([0-9]+)/);
+    let rawPhone = phoneMatch ? phoneMatch[1] : '';
+    if (rawPhone.startsWith('0')) {
+      rawPhone = '62' + rawPhone.slice(1);
     }
+
+    const title = receiptType === 'invoice' ? 'INVOICE PEMBAYARAN' : 'NOTA BUKTI PEMBAYARAN LUNAS';
+    const totalPay = (selectedAppt.price || 30000).toLocaleString('id-ID');
+    const serviceFee = ((selectedAppt.price || 30000) - (selectedAppt.admin_fee || 30000)).toLocaleString('id-ID');
+    const adminFee = (selectedAppt.admin_fee || 30000).toLocaleString('id-ID');
+
+    let msg = `*BENANG MERAH - ${title}*\n`;
+    msg += `-------------------------------------------\n`;
+    msg += `*Nama Klien/Pasien:* ${selectedAppt.patient_name || 'Klien'}\n`;
+    msg += `*Tanggal Sesi:* ${selectedAppt.booking_date} (${selectedAppt.booking_time})\n`;
+    msg += `*Layanan:* ${(selectedAppt.service_type || selectedAppt.category || 'Konseling').toUpperCase()}\n`;
+    msg += `*Psikolog PJ:* ${selectedAppt.doctor_name}\n`;
+    if (selectedAppt.assigned_terapis) {
+      msg += `*Terapis:* ${selectedAppt.assigned_terapis}\n`;
+    }
+    msg += `-------------------------------------------\n`;
+    msg += `Biaya Layanan: Rp ${serviceFee}\n`;
+    msg += `Biaya Administrasi: Rp ${adminFee}\n`;
+    msg += `*TOTAL ${receiptType === 'invoice' ? 'TAGIHAN' : 'BAYAR'}: Rp ${totalPay}*\n`;
+    msg += `-------------------------------------------\n`;
+    if (receiptType === 'invoice') {
+      msg += `Status: *BELUM DIBAYAR*\n`;
+      msg += `Silakan melakukan pembayaran via QRIS / Kasir Benang Merah.\n`;
+    } else {
+      msg += `Status: *LUNAS / PAID*\n`;
+      msg += `Terima kasih telah mempercayakan ruang pemulihan Anda bersama Benang Merah. ✨\n`;
+    }
+
+    const targetUrl = rawPhone 
+      ? `https://wa.me/${rawPhone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+
+    window.open(targetUrl, '_blank');
+  };
+
+  // FUNGSI PRINT / CETAK STRUK
+  const executePrintOnly = () => {
+    const printableContent = document.getElementById('printable-receipt');
+    if (!printableContent) return;
+
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${receiptType.toUpperCase()} - ${selectedAppt?.patient_name || 'Pasien'}</title>
+          <style>
+            body { font-family: monospace; padding: 20px; margin: 0; background: #ffffff; color: #111827; }
+            .receipt-box { border: 2px dashed #701A24; padding: 24px; border-radius: 16px; max-width: 450px; margin: 0 auto; position: relative; }
+            .text-center { text-align: center; }
+            .border-b { border-bottom: 1px solid #EADFD5; padding-bottom: 8px; }
+            .border-t { border-top: 1px solid #EADFD5; padding-top: 8px; }
+            .font-bold { font-weight: bold; }
+            .text-sm { font-size: 13px; }
+            .text-xs { font-size: 11px; }
+            .flex-between { display: flex; justify-content: space-between; margin-bottom: 4px; }
+            .brand { color: #701A24; font-family: serif; font-size: 18px; margin: 0; }
+            .sub { color: #6B7280; font-size: 10px; margin: 2px 0; }
+            .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-top: 6px; text-transform: uppercase; }
+            .badge-paid { background: #D1FAE5; color: #065F46; }
+            .badge-inv { background: #FEF3C7; color: #92400E; }
+            .stamp { position: absolute; right: 15px; bottom: 40px; transform: rotate(-12deg); border: 3px double #701A24; padding: 4px 8px; border-radius: 8px; color: #701A24; font-weight: bold; font-size: 11px; background: rgba(255,255,255,0.9); }
+            .qr-code { text-align: center; margin: 12px 0; }
+            .qr-code img { width: 140px; height: 140px; border: 1px solid #ddd; padding: 4px; border-radius: 8px; }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-box">
+            ${receiptType === 'paid' ? '<div class="stamp">LUNAS / PAID<br/><span style="font-size:7px;">BENANG MERAH</span></div>' : ''}
+            <div class="text-center border-b">
+              <h2 class="brand">BENANG MERAH</h2>
+              <p class="sub">Layanan Psikologi & Kesehatan Mental</p>
+              <p class="sub">Jl. Bandung No. B9/16, Nuansa Majasem | WA: 0822-9858-5310</p>
+              <span class="badge ${receiptType === 'paid' ? 'badge-paid' : 'badge-inv'}">
+                ${receiptType === 'invoice' ? 'INVOICE PEMBAYARAN' : 'NOTA BUKTI PEMBAYARAN LUNAS'}
+              </span>
+            </div>
+
+            <div style="margin: 12px 0;" class="text-xs">
+              <p style="margin: 3px 0;"><span style="color:#6B7280;">Tanggal & Sesi:</span> ${selectedAppt.booking_date} (${selectedAppt.booking_time})</p>
+              <p style="margin: 3px 0;"><span style="color:#6B7280;">Klien / Pasien:</span> <strong>${selectedAppt.patient_name || selectedAppt.notes}</strong></p>
+              <p style="margin: 3px 0;"><span style="color:#6B7280;">Layanan:</span> ${(selectedAppt.service_type || selectedAppt.category || 'Terlampir').toUpperCase()}</p>
+              <p style="margin: 3px 0;"><span style="color:#6B7280;">Psikolog PJ:</span> ${selectedAppt.doctor_name}</p>
+              ${selectedAppt.assigned_terapis ? `<p style="margin: 3px 0;"><span style="color:#6B7280;">Terapis:</span> ${selectedAppt.assigned_terapis}</p>` : ''}
+            </div>
+
+            ${receiptType === 'invoice' ? `
+              <div class="qr-code">
+                <p style="font-size:10px; color:#701A24; font-weight:bold; margin-bottom:4px;">SCAN QRIS UNTUK PEMBAYARAN:</p>
+                <img src="${qrCodeUrl}" alt="QRIS Pembayaran"/>
+              </div>
+            ` : ''}
+
+            <div class="border-t border-b text-xs" style="margin: 10px 0; padding: 8px 0;">
+              <div class="flex-between">
+                <span>Biaya Layanan / Sesi:</span>
+                <span>Rp ${((selectedAppt.price || 30000) - (selectedAppt.admin_fee || 30000)).toLocaleString('id-ID')}</span>
+              </div>
+              <div class="flex-between">
+                <span>Biaya Administrasi:</span>
+                <span>Rp ${(selectedAppt.admin_fee || 30000).toLocaleString('id-ID')}</span>
+              </div>
+              <div class="flex-between font-bold text-sm" style="color:#701A24; margin-top:6px; border-top:1px dashed #ccc; padding-top:6px;">
+                <span>TOTAL ${receiptType === 'invoice' ? 'TAGIHAN' : 'BAYAR'}:</span>
+                <span>Rp ${(selectedAppt.price || 30000).toLocaleString('id-ID')}</span>
+              </div>
+            </div>
+
+            <div class="text-center text-xs" style="color:#6B7280; font-style:italic;">
+              ${receiptType === 'invoice' ? '* Silakan lakukan pembayaran sesuai nominal di atas ke kasir / QRIS resmi Benang Merah.' : '*** Pembayaran telah diterima. Terima kasih telah mempercayakan ruang pemulihan Anda bersama Benang Merah ***'}
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    }, 250);
+  };
+
+  // FUNGSI DOWNLOAD FILE HTML/PDF LANGSUNG
+  const executeDownloadPdfDirect = () => {
+    const patientName = (selectedAppt?.patient_name || 'Pasien').replace(/[^a-zA-Z0-9]/g, '_');
+    const fileName = `${receiptType.toUpperCase()}_BenangMerah_${patientName}_${selectedAppt?.booking_date || ''}.html`;
+
+    const content = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8"/>
+          <title>${receiptType.toUpperCase()} - ${selectedAppt?.patient_name || 'Pasien'}</title>
+          <style>
+            body { font-family: monospace; padding: 30px; background: #ffffff; color: #111827; }
+            .receipt-box { border: 2px dashed #701A24; padding: 24px; border-radius: 16px; max-width: 480px; margin: 0 auto; position: relative; }
+            .text-center { text-align: center; }
+            .border-b { border-bottom: 1px solid #EADFD5; padding-bottom: 8px; }
+            .border-t { border-top: 1px solid #EADFD5; padding-top: 8px; }
+            .font-bold { font-weight: bold; }
+            .text-sm { font-size: 13px; }
+            .text-xs { font-size: 11px; }
+            .flex-between { display: flex; justify-content: space-between; margin-bottom: 4px; }
+            .brand { color: #701A24; font-family: serif; font-size: 20px; margin: 0; }
+            .sub { color: #6B7280; font-size: 10px; margin: 2px 0; }
+            .badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-top: 6px; text-transform: uppercase; }
+            .badge-paid { background: #D1FAE5; color: #065F46; }
+            .badge-inv { background: #FEF3C7; color: #92400E; }
+            .stamp { position: absolute; right: 15px; bottom: 40px; transform: rotate(-12deg); border: 3px double #701A24; padding: 4px 8px; border-radius: 8px; color: #701A24; font-weight: bold; font-size: 11px; background: rgba(255,255,255,0.9); }
+            .qr-code { text-align: center; margin: 12px 0; }
+            .qr-code img { width: 140px; height: 140px; border: 1px solid #ddd; padding: 4px; border-radius: 8px; }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-box">
+            ${receiptType === 'paid' ? '<div class="stamp">LUNAS / PAID<br/><span style="font-size:7px;">BENANG MERAH</span></div>' : ''}
+            <div class="text-center border-b">
+              <h2 class="brand">BENANG MERAH</h2>
+              <p class="sub">Layanan Psikologi & Kesehatan Mental</p>
+              <p class="sub">Jl. Bandung No. B9/16, Nuansa Majasem | WA: 0822-9858-5310</p>
+              <span class="badge ${receiptType === 'paid' ? 'badge-paid' : 'badge-inv'}">
+                ${receiptType === 'invoice' ? 'INVOICE PEMBAYARAN' : 'NOTA BUKTI PEMBAYARAN LUNAS'}
+              </span>
+            </div>
+
+            <div style="margin: 12px 0;" class="text-xs">
+              <p style="margin: 4px 0;"><span style="color:#6B7280;">Tanggal & Sesi:</span> ${selectedAppt.booking_date} (${selectedAppt.booking_time})</p>
+              <p style="margin: 4px 0;"><span style="color:#6B7280;">Klien / Pasien:</span> <strong>${selectedAppt.patient_name || selectedAppt.notes}</strong></p>
+              <p style="margin: 4px 0;"><span style="color:#6B7280;">Layanan:</span> ${(selectedAppt.service_type || selectedAppt.category || 'Terlampir').toUpperCase()}</p>
+              <p style="margin: 4px 0;"><span style="color:#6B7280;">Psikolog PJ:</span> ${selectedAppt.doctor_name}</p>
+              ${selectedAppt.assigned_terapis ? `<p style="margin: 4px 0;"><span style="color:#6B7280;">Terapis:</span> ${selectedAppt.assigned_terapis}</p>` : ''}
+            </div>
+
+            ${receiptType === 'invoice' ? `
+              <div class="qr-code">
+                <p style="font-size:10px; color:#701A24; font-weight:bold; margin-bottom:4px;">SCAN QRIS UNTUK PEMBAYARAN:</p>
+                <img src="${qrCodeUrl}" alt="QRIS Pembayaran"/>
+              </div>
+            ` : ''}
+
+            <div class="border-t border-b text-xs" style="margin: 10px 0; padding: 8px 0;">
+              <div class="flex-between">
+                <span>Biaya Layanan / Sesi:</span>
+                <span>Rp ${((selectedAppt.price || 30000) - (selectedAppt.admin_fee || 30000)).toLocaleString('id-ID')}</span>
+              </div>
+              <div class="flex-between">
+                <span>Biaya Administrasi:</span>
+                <span>Rp ${(selectedAppt.admin_fee || 30000).toLocaleString('id-ID')}</span>
+              </div>
+              <div class="flex-between font-bold text-sm" style="color:#701A24; margin-top:6px; border-top:1px dashed #ccc; padding-top:6px;">
+                <span>TOTAL ${receiptType === 'invoice' ? 'TAGIHAN' : 'BAYAR'}:</span>
+                <span>Rp ${(selectedAppt.price || 30000).toLocaleString('id-ID')}</span>
+              </div>
+            </div>
+
+            <div class="text-center text-xs" style="color:#6B7280; font-style:italic;">
+              ${receiptType === 'invoice' ? '* Silakan lakukan pembayaran sesuai nominal di atas ke kasir / QRIS resmi Benang Merah.' : '*** Pembayaran telah diterima. Terima kasih telah mempercayakan ruang pemulihan Anda bersama Benang Merah ***'}
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob([content], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // EXCEL DOWNLOAD KEUANGAN
@@ -1172,7 +1399,7 @@ export default function App() {
                                   }}
                                   className="w-full px-2.5 py-1.5 bg-[#701A24] text-white rounded-lg text-[11px] font-semibold hover:bg-[#54121B] block transition shadow-sm"
                                 >
-                                  <StethoscopeIcon /> Isi Rekam Medis
+                                  <StethoscopeIcon /> Selesai Sesi & Rekam Medis
                                 </button>
                               )}
 
@@ -1346,7 +1573,7 @@ export default function App() {
             <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center border-b pb-3">
                 <h3 className="font-bold text-gray-800 text-base flex items-center gap-1.5 text-[#701A24]">
-                  <StethoscopeIcon /> Form Rekam Medis Psikolog
+                  <StethoscopeIcon /> Form Rekam Medis & Selesai Sesi
                 </h3>
                 <button onClick={() => setShowMedicalModal(false)} className="text-gray-400 font-bold hover:text-gray-600">✕</button>
               </div>
@@ -1467,7 +1694,7 @@ export default function App() {
                   onClick={handleSavePsychologistRecord}
                   className="w-full py-2.5 bg-[#701A24] text-white font-semibold rounded-lg hover:bg-[#54121B] transition shadow"
                 >
-                  Simpan Rekam Medis & Tindak Lanjut
+                  Selesaikan Sesi & Buat Invoice Pembayaran
                 </button>
               </div>
             </div>
@@ -1513,69 +1740,87 @@ export default function App() {
           </div>
         )}
 
-        {/* MODAL 3: NOTA PEMBAYARAN KLINIK */}
+        {/* MODAL 3: NOTA & INVOICE PEMBAYARAN KLINIK (DYNAMIC DUAL-STATE) */}
         {showReceiptModal && selectedAppt && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-fade-up">
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-up">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border border-[#EADFD5]">
               
-              <div className="flex justify-between items-center border-b pb-3 print:hidden">
-                <h3 className="font-bold text-gray-800 text-sm flex items-center gap-1.5 text-[#701A24]">
-                  <ReceiptIcon /> Cetak & Download Nota
-                </h3>
-                <button onClick={() => setShowReceiptModal(false)} className="text-gray-400 font-bold hover:text-gray-600">✕</button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl print:hidden">
-                <button
-                  onClick={() => setReceiptType('invoice')}
-                  className={`py-2 text-xs font-semibold rounded-lg transition ${
-                    receiptType === 'invoice'
-                      ? 'bg-amber-600 text-white shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
+              {/* HEADER MODAL ELEGANT & SIMPLE */}
+              <div className="flex justify-between items-center border-b border-[#EADFD5] pb-3.5 print:hidden">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-[#701A24]/10 flex items-center justify-center text-[#701A24]">
+                    <ReceiptIcon />
+                  </div>
+                  <div>
+                    <h3 className="font-serif font-bold text-gray-800 text-sm leading-tight">
+                      {selectedAppt.status === 'lunas' ? 'Nota Bukti Pembayaran' : 'Invoice Tagihan Konseling'}
+                    </h3>
+                    <p className="text-[10px] text-gray-500 font-medium">Layanan Psikologi Benang Merah</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowReceiptModal(false)} 
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
                 >
-                  📄 Invoice Tagihan
-                </button>
-                <button
-                  onClick={() => setReceiptType('paid')}
-                  className={`py-2 text-xs font-semibold rounded-lg transition ${
-                    receiptType === 'paid'
-                      ? 'bg-[#701A24] text-white shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  ✅ Struk Lunas (PAID)
+                  ✕
                 </button>
               </div>
 
-              {/* AREA STRUK/INVOICE YANG BISA DI-PRINT & DI-DOWNLOAD HASIL PDF */}
+              {/* INDIKATOR STATUS SINGLE (MAROON THEME) */}
+              <div className="print:hidden">
+                {selectedAppt.status === 'lunas' ? (
+                  <div className="flex items-center justify-between px-3.5 py-2.5 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl text-emerald-800 text-xs font-semibold">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Status: LUNAS / PAID
+                    </span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                      Terverifikasi
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between px-3.5 py-2.5 bg-[#701A24]/5 border border-[#701A24]/15 rounded-2xl text-[#701A24] text-xs font-semibold">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#701A24] animate-pulse"></span>
+                      Status: MENUNGGU PEMBAYARAN
+                    </span>
+                    <span className="text-[10px] bg-[#701A24] text-white px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-xs">
+                      Invoice Tagihan
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* AREA STRUK / INVOICE CETAK */}
               <div id="printable-receipt" className="p-5 border border-dashed border-[#EADFD5] rounded-2xl space-y-3 font-mono bg-[#FAF8F5] relative overflow-hidden">
                 
-                {receiptType === 'paid' && (
-                  <div className="absolute right-4 bottom-10 pointer-events-none transform -rotate-12 opacity-90">
-                    <div className="border-4 border-double border-[#701A24] rounded-xl px-3 py-1.5 text-center bg-white/95 shadow-sm">
+                {/* CAP STAMP STAMPEL LUNAS (HANYA TAMPIL JIKA SUDAH LUNAS) */}
+                {selectedAppt.status === 'lunas' && (
+                  <div className="absolute right-4 bottom-12 pointer-events-none transform -rotate-12 opacity-90">
+                    <div className="border-4 border-double border-[#701A24] rounded-xl px-3.5 py-1.5 text-center bg-white/95 shadow-sm">
                       <div className="flex items-center justify-center gap-1.5">
                         <img 
                           src="/logo.png" 
                           alt="Logo Benang Merah" 
-                          className="w-5 h-5 object-contain"
+                          className="w-4 h-4 object-contain"
                           onError={(e) => {
                             e.target.onerror = null;
                             e.target.src = "/logo.jpeg";
                           }}
                         />
-                        <span className="text-xs font-black tracking-wider text-[#701A24] uppercase">
+                        <span className="text-xs font-black tracking-widest text-[#701A24] uppercase">
                           LUNAS / PAID
                         </span>
                       </div>
-                      <p className="text-[8px] font-bold text-[#701A24] mt-0.5 border-t border-[#701A24] pt-0.5 uppercase tracking-widest">
+                      <p className="text-[7.5px] font-bold text-[#701A24] mt-0.5 border-t border-[#701A24] pt-0.5 uppercase tracking-widest">
                         BENANG MERAH
                       </p>
                     </div>
                   </div>
                 )}
 
-                <div className="text-center border-b pb-2">
+                {/* KOP NOTA / INVOICE */}
+                <div className="text-center border-b border-[#EADFD5] pb-2.5">
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <img 
                       src="/logo.png" 
@@ -1586,24 +1831,25 @@ export default function App() {
                         e.target.src = "/logo.jpeg";
                       }}
                     />
-                    <h2 className="font-bold text-base font-serif text-[#701A24]">BENANG MERAH</h2>
+                    <h2 className="font-bold text-base font-serif text-[#701A24] tracking-tight">BENANG MERAH</h2>
                   </div>
                   <p className="text-[10px] text-gray-500 font-sans">Layanan Psikologi & Kesehatan Mental</p>
                   <p className="text-[9px] text-gray-400 font-sans">Jl. Bandung No. B9/16, Nuansa Majasem | WA: 0822-9858-5310</p>
                   
                   <div className="mt-2">
-                    {receiptType === 'invoice' ? (
-                      <span className="inline-block px-2.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded uppercase tracking-wider">
-                        INVOICE PEMBAYARAN
+                    {selectedAppt.status !== 'lunas' ? (
+                      <span className="inline-block px-3 py-0.5 bg-[#701A24]/10 text-[#701A24] text-[10px] font-bold rounded-full uppercase tracking-wider border border-[#701A24]/20">
+                        INVOICE TAGIHAN PEMBAYARAN
                       </span>
                     ) : (
-                      <span className="inline-block px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded uppercase tracking-wider">
+                      <span className="inline-block px-3 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full uppercase tracking-wider border border-emerald-200">
                         NOTA BUKTI PEMBAYARAN LUNAS
                       </span>
                     )}
                   </div>
                 </div>
 
+                {/* RINCIAN PASIEN & LAYANAN */}
                 <div className="space-y-1 text-[11px] font-sans">
                   <p><span className="text-gray-500">Tanggal & Sesi:</span> {selectedAppt.booking_date} ({selectedAppt.booking_time})</p>
                   <p><span className="text-gray-500">Klien / Pasien:</span> <strong className="text-gray-800">{selectedAppt.patient_name || selectedAppt.notes}</strong></p>
@@ -1614,45 +1860,81 @@ export default function App() {
                   )}
                 </div>
 
-                <div className="border-t border-b py-2 space-y-1 text-xs font-sans">
+                {/* QR CODE QRIS (HANYA MUNCUL JIKA BELUM LUNAS) */}
+                {selectedAppt.status !== 'lunas' && (
+                  <div className="text-center bg-white p-3 rounded-2xl border border-[#701A24]/20 shadow-xs">
+                    <p className="text-[10px] font-bold text-[#701A24] mb-1.5 font-sans flex items-center justify-center gap-1">
+                      <span>SCAN QRIS UNTUK PEMBAYARAN</span>
+                    </p>
+                    <img 
+                      src={qrCodeUrl} 
+                      alt="QRIS Pembayaran" 
+                      className="w-36 h-36 object-contain mx-auto border rounded-xl p-1 bg-white shadow-xs"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/qris.jpeg";
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* TOTAL BIAYA */}
+                <div className="border-t border-b border-[#EADFD5] py-2 space-y-1 text-xs font-sans">
                   <div className="flex justify-between">
-                    <span>Biaya Layanan / Sesi:</span>
+                    <span className="text-gray-600">Biaya Layanan / Sesi:</span>
                     <span>Rp {((selectedAppt.price || 30000) - (selectedAppt.admin_fee || 30000)).toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Biaya Administrasi:</span>
+                    <span className="text-gray-600">Biaya Administrasi:</span>
                     <span>Rp {(selectedAppt.admin_fee || 30000).toLocaleString('id-ID')}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-sm text-[#701A24] pt-1.5 border-t border-dashed">
-                    <span>TOTAL {receiptType === 'invoice' ? 'TAGIHAN' : 'BAYAR'}:</span>
+                  <div className="flex justify-between font-bold text-sm text-[#701A24] pt-1.5 border-t border-dashed border-[#EADFD5]">
+                    <span>TOTAL {selectedAppt.status !== 'lunas' ? 'TAGIHAN' : 'BAYAR'}:</span>
                     <span>Rp {(selectedAppt.price || 30000).toLocaleString('id-ID')}</span>
                   </div>
                 </div>
 
-                <div className="text-center text-[10px] text-gray-500 italic pt-1 font-sans">
-                  {receiptType === 'invoice' ? (
-                    <span>* Silakan lakukan pembayaran sesuai nominal di atas ke kasir / rekening resmi Benang Merah.</span>
+                <div className="text-center text-[10px] text-gray-500 italic pt-0.5 font-sans">
+                  {selectedAppt.status !== 'lunas' ? (
+                    <span>* Silakan lakukan pembayaran sesuai nominal ke QRIS / kasir resmi Benang Merah.</span>
                   ) : (
                     <span>*** Pembayaran telah diterima. Terima kasih telah mempercayakan ruang pemulihan Anda bersama Benang Merah ***</span>
                   )}
                 </div>
               </div>
 
-              {/* DUA TOMBOL AKSI: PRINT DAN DOWNLOAD PDF */}
-              <div className="grid grid-cols-2 gap-2 print:hidden">
+              {/* ACTION BUTTONS (SEARSIN MAROON) */}
+              <div className="space-y-2 print:hidden pt-1">
+                {selectedAppt.status !== 'lunas' && (
+                  <button
+                    onClick={handleMarkAsPaid}
+                    className="w-full py-2.5 bg-[#701A24] text-white font-semibold rounded-xl hover:bg-[#54121B] text-xs transition shadow-md hover:shadow-lg flex items-center justify-center gap-1.5"
+                  >
+                    <span>✅</span> Verifikasi Pembayaran & Terbitkan Struk Lunas
+                  </button>
+                )}
+
                 <button
-                  onClick={executePrint}
-                  className="py-2.5 bg-gray-800 text-white font-semibold rounded-lg hover:bg-gray-900 text-xs flex items-center justify-center gap-1.5 shadow transition"
+                  onClick={sendWaReceipt}
+                  className="w-full py-2.5 bg-emerald-700 text-white font-semibold rounded-xl hover:bg-emerald-800 text-xs flex items-center justify-center gap-1.5 shadow transition"
                 >
-                  <ReceiptIcon /> Print Nota
+                  📲 Kirim WA ke Client
                 </button>
-                <button
-                  onClick={executeDownloadPdf}
-                  disabled={isDownloadingPdf}
-                  className="py-2.5 bg-[#701A24] text-white font-semibold rounded-lg hover:bg-[#54121B] text-xs flex items-center justify-center gap-1.5 shadow transition"
-                >
-                  <DownloadChartIcon /> {isDownloadingPdf ? 'Mengunduh...' : 'Download PDF'}
-                </button>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={executePrintOnly}
+                    className="w-full py-2 bg-white border border-[#701A24] text-[#701A24] font-semibold rounded-xl hover:bg-[#701A24]/5 text-xs flex items-center justify-center gap-1.5 transition"
+                  >
+                    <ReceiptIcon /> Cetak Struk
+                  </button>
+                  <button
+                    onClick={executeDownloadPdfDirect}
+                    className="w-full py-2 bg-gray-800 text-white font-semibold rounded-xl hover:bg-gray-900 text-xs flex items-center justify-center gap-1.5 transition"
+                  >
+                    <ReceiptIcon /> Download File
+                  </button>
+                </div>
               </div>
 
             </div>
