@@ -160,6 +160,11 @@ export default function App() {
   const [directTherapyMethod, setDirectTherapyMethod] = useState('Play and Grow');
   const [bookingDate, setBookingDate] = useState('');
   const [bookingTime, setBookingTime] = useState('09:00');
+  
+  // STATE BARU: Pilihan Layanan Opsional & Input Harga Manual oleh Admin
+  const [serviceTypeInput, setServiceTypeInput] = useState('');
+  const [customServicePrice, setCustomServicePrice] = useState(0);
+
   const [submitting, setSubmitting] = useState(false);
   const [bookingMsg, setBookingMsg] = useState('');
 
@@ -297,9 +302,17 @@ export default function App() {
       const isDirect = registrationType === 'terapis_direct';
       const selectedTherapist = isDirect ? (directTherapist || activeTherapistList[0]) : null;
 
+      // Penentuan Kategori Layanan
+      const finalServiceType = isDirect 
+        ? directTherapyMethod 
+        : (serviceTypeInput ? serviceTypeInput : null);
+
       const initialNotes = isDirect 
         ? `[Klien: ${patientName} - HP: ${patientPhone}] (Layanan Langsung Terapis: ${directTherapyMethod})`
         : `[Klien: ${patientName} - HP: ${patientPhone}]`;
+
+      // Kalkulasi Biaya Total = Harga Layanan Kustom Admin + Biaya Admin
+      const totalCalculatedPrice = Number(customServicePrice) + Number(adminFeeInput);
 
       const { error } = await supabase.from('appointments').insert([
         {
@@ -310,12 +323,12 @@ export default function App() {
           booking_date: bookingDate,
           booking_time: bookingTime,
           status: isDirect ? 'dirujuk_terapis' : 'pending',
-          service_type: isDirect ? directTherapyMethod : null,
-          category: isDirect ? directTherapyMethod : null,
+          service_type: finalServiceType,
+          category: finalServiceType,
           notes: initialNotes,
           age: parseInt(patientAge) || 0,
           visit_number: parseInt(visitNumber) || 1,
-          price: Number(adminFeeInput),
+          price: totalCalculatedPrice,
           admin_fee: Number(adminFeeInput)
         },
       ]);
@@ -327,6 +340,8 @@ export default function App() {
       setPatientPhone('');
       setPatientAge('');
       setVisitNumber(1);
+      setServiceTypeInput('');
+      setCustomServicePrice(0);
     } catch (err) {
       setBookingMsg(`Gagal: ${err.message}`);
     } finally {
@@ -1206,6 +1221,50 @@ export default function App() {
                       </div>
                     )}
 
+                    {/* FITUR BARU: OPSI LAYANAN DAN INPUT HARGA KUSTOM ADMIN */}
+                    {registrationType === 'psikolog' && (
+                      <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/80 space-y-2.5">
+                        <div>
+                          <label className="block font-semibold text-amber-900 mb-1">
+                            Opsi Layanan Psikolog (Opsional)
+                          </label>
+                          <select
+                            value={serviceTypeInput}
+                            onChange={(e) => setServiceTypeInput(e.target.value)}
+                            className="w-full px-3.5 py-2 border border-amber-300 rounded-lg outline-none font-medium text-gray-800 bg-white focus:ring-2 focus:ring-amber-500"
+                          >
+                            <option value="">-- Belum Ditentukan (Tunggu Form Psikolog) --</option>
+                            <option value="Assessment / Intake Interview">Assessment / Intake Interview</option>
+                            <option value="Konseling Individu">Konseling Individu</option>
+                            <option value="Psikoterapi">Psikoterapi</option>
+                            <option value="Terapi Anak">Terapi Anak</option>
+                            <option value="Konseling Pasangan (Couple)">Konseling Pasangan (Couple)</option>
+                            <option value="Konseling Keluarga">Konseling Keluarga</option>
+                            <option value="Layanan Lainnya">Layanan Lainnya / Manual</option>
+                          </select>
+                          <p className="text-[10px] text-amber-800 italic mt-1">
+                            *Pilih jika transaksi pembayaran ingin langsung diproses tanpa menunggu Form Psikolog.
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-amber-900 mb-1">
+                            Harga Layanan Kustom Admin (Rp)
+                          </label>
+                          <input
+                            type="number"
+                            placeholder="0 (Atau ketik misal: 300000)"
+                            value={customServicePrice}
+                            onChange={(e) => setCustomServicePrice(e.target.value)}
+                            className="w-full px-3.5 py-2 border border-amber-300 rounded-lg outline-none font-semibold text-gray-800 bg-white focus:ring-2 focus:ring-amber-500"
+                          />
+                          <p className="text-[10px] text-amber-800 italic mt-1">
+                            *Ketik nominal harga layanan yang disepakati (di luar Biaya Admin).
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block font-medium text-gray-600 mb-1">Tanggal Sesi</label>
@@ -1241,6 +1300,13 @@ export default function App() {
                         onChange={(e) => setAdminFeeInput(e.target.value)}
                         className="w-full px-3.5 py-2 border border-gray-200 rounded-lg outline-none font-semibold text-gray-800 focus:ring-2 focus:ring-[#701A24]"
                       />
+                    </div>
+
+                    <div className="p-2.5 bg-[#FAF8F5] rounded-xl border border-gray-200 font-semibold text-gray-700 flex justify-between items-center text-[11px]">
+                      <span>Estimasi Total Biaya:</span>
+                      <span className="text-[#701A24] font-bold text-xs">
+                        Rp {(Number(customServicePrice) + Number(adminFeeInput)).toLocaleString('id-ID')}
+                      </span>
                     </div>
 
                     <button
@@ -1417,21 +1483,30 @@ export default function App() {
 
                               {canAccessAdminForm && (
                                 <>
-                                  <button
-                                    onClick={() => handleOpenEditModal(item)}
-                                    className="w-full px-2.5 py-1 bg-amber-600 text-white rounded text-[11px] font-semibold hover:bg-amber-700 block transition"
-                                  >
-                                    <EditIcon /> Edit Pendaftaran
-                                  </button>
+                                  {/* TOMBOL EDIT PENDAFTARAN HANYA TAMPIL JIKA BELUM LUNAS */}
+                                  {item.status !== 'lunas' && (
+                                    <button
+                                      onClick={() => handleOpenEditModal(item)}
+                                      className="w-full px-2.5 py-1.5 bg-[#701A24]/10 text-[#701A24] border border-[#701A24]/20 hover:bg-[#701A24] hover:text-white rounded-xl text-[11px] font-semibold block transition"
+                                    >
+                                      <EditIcon /> Edit Pendaftaran
+                                    </button>
+                                  )}
+
                                   <button
                                     onClick={() => handlePrintReceipt(item)}
-                                    className="w-full px-2.5 py-1 bg-emerald-700 text-white rounded text-[11px] font-semibold hover:bg-emerald-800 block transition"
+                                    className={`w-full px-2.5 py-1.5 text-white rounded-xl text-[11px] font-semibold block transition shadow-xs ${
+                                      item.status === 'lunas' 
+                                        ? 'bg-emerald-700 hover:bg-emerald-800' 
+                                        : 'bg-[#701A24] hover:bg-[#54121B]'
+                                    }`}
                                   >
-                                    <ReceiptIcon /> Cetak Struk / Nota
+                                    <ReceiptIcon /> {item.status === 'lunas' ? 'Lihat Nota Lunas' : 'Cetak Invoice / Struk'}
                                   </button>
+
                                   <button
                                     onClick={() => handleDeleteAppointment(item.id)}
-                                    className="text-[10px] text-red-600 hover:text-red-800 font-medium hover:underline block w-full pt-1"
+                                    className="text-[10px] text-red-500 hover:text-red-700 font-medium hover:underline block w-full pt-1"
                                   >
                                     Hapus Pendaftaran
                                   </button>
@@ -1740,7 +1815,7 @@ export default function App() {
           </div>
         )}
 
-        {/* MODAL 3: NOTA & INVOICE PEMBAYARAN KLINIK (DYNAMIC DUAL-STATE) */}
+        {/* MODAL 3: NOTA & INVOICE PEMBAYARAN KLINIK (DYNAMIC DUAL-STATE & ELEGAN) */}
         {showReceiptModal && selectedAppt && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-up">
             <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border border-[#EADFD5]">
@@ -1760,7 +1835,7 @@ export default function App() {
                 </div>
                 <button 
                   onClick={() => setShowReceiptModal(false)} 
-                  className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-sm font-semibold"
                 >
                   ✕
                 </button>
@@ -1771,11 +1846,11 @@ export default function App() {
                 {selectedAppt.status === 'lunas' ? (
                   <div className="flex items-center justify-between px-3.5 py-2.5 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl text-emerald-800 text-xs font-semibold">
                     <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                       Status: LUNAS / PAID
                     </span>
                     <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                      Terverifikasi
+                      ✓ Terverifikasi
                     </span>
                   </div>
                 ) : (
@@ -1863,8 +1938,8 @@ export default function App() {
                 {/* QR CODE QRIS (HANYA MUNCUL JIKA BELUM LUNAS) */}
                 {selectedAppt.status !== 'lunas' && (
                   <div className="text-center bg-white p-3 rounded-2xl border border-[#701A24]/20 shadow-xs">
-                    <p className="text-[10px] font-bold text-[#701A24] mb-1.5 font-sans flex items-center justify-center gap-1">
-                      <span>SCAN QRIS UNTUK PEMBAYARAN</span>
+                    <p className="text-[10px] font-bold text-[#701A24] mb-1.5 font-sans flex items-center justify-center gap-1.5 uppercase tracking-wide">
+                      <span className="text-xs">✧</span> SCAN QRIS UNTUK PEMBAYARAN <span className="text-xs">✧</span>
                     </p>
                     <img 
                       src={qrCodeUrl} 
@@ -1903,14 +1978,14 @@ export default function App() {
                 </div>
               </div>
 
-              {/* ACTION BUTTONS (SEARSIN MAROON) */}
+              {/* ACTION BUTTONS */}
               <div className="space-y-2 print:hidden pt-1">
                 {selectedAppt.status !== 'lunas' && (
                   <button
                     onClick={handleMarkAsPaid}
                     className="w-full py-2.5 bg-[#701A24] text-white font-semibold rounded-xl hover:bg-[#54121B] text-xs transition shadow-md hover:shadow-lg flex items-center justify-center gap-1.5"
                   >
-                    <span>✅</span> Verifikasi Pembayaran & Terbitkan Struk Lunas
+                    <span>✓</span> Verifikasi Pembayaran & Terbitkan Struk Lunas
                   </button>
                 )}
 
@@ -1918,23 +1993,36 @@ export default function App() {
                   onClick={sendWaReceipt}
                   className="w-full py-2.5 bg-emerald-700 text-white font-semibold rounded-xl hover:bg-emerald-800 text-xs flex items-center justify-center gap-1.5 shadow transition"
                 >
-                  📲 Kirim WA ke Client
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                  </svg>
+                  Kirim WA ke Client
                 </button>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={executePrintOnly}
-                    className="w-full py-2 bg-white border border-[#701A24] text-[#701A24] font-semibold rounded-xl hover:bg-[#701A24]/5 text-xs flex items-center justify-center gap-1.5 transition"
-                  >
-                    <ReceiptIcon /> Cetak Struk
-                  </button>
+                {/* CONDITIONAL LAYOUT: HANYA DOWNLOAD FILE JIKA LUNAS, CETAK STRUK DISENBUNYIKAN */}
+                {selectedAppt.status !== 'lunas' ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={executePrintOnly}
+                      className="w-full py-2 bg-white border border-[#701A24] text-[#701A24] font-semibold rounded-xl hover:bg-[#701A24]/5 text-xs flex items-center justify-center gap-1.5 transition"
+                    >
+                      <ReceiptIcon /> Cetak Struk
+                    </button>
+                    <button
+                      onClick={executeDownloadPdfDirect}
+                      className="w-full py-2 bg-gray-800 text-white font-semibold rounded-xl hover:bg-gray-900 text-xs flex items-center justify-center gap-1.5 transition"
+                    >
+                      <ReceiptIcon /> Download File
+                    </button>
+                  </div>
+                ) : (
                   <button
                     onClick={executeDownloadPdfDirect}
-                    className="w-full py-2 bg-gray-800 text-white font-semibold rounded-xl hover:bg-gray-900 text-xs flex items-center justify-center gap-1.5 transition"
+                    className="w-full py-2.5 bg-gray-800 text-white font-semibold rounded-xl hover:bg-gray-900 text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
                   >
-                    <ReceiptIcon /> Download File
+                    <ReceiptIcon /> Download File Nota Lunas
                   </button>
-                </div>
+                )}
               </div>
 
             </div>
