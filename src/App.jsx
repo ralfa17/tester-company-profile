@@ -146,7 +146,7 @@ export default function App() {
   // Master Biaya & Setting Tarif Admin
   const [adminFeeInput, setAdminFeeInput] = useState(30000);
 
-  // Path QR Code Pembayaran (Taruh file qr di folder public)
+  // Path QR Code Pembayaran
   const qrCodeUrl = "/qris.jpeg";
 
   // State Form Input Pasien Baru
@@ -161,7 +161,7 @@ export default function App() {
   const [bookingDate, setBookingDate] = useState('');
   const [bookingTime, setBookingTime] = useState('09:00');
   
-  // STATE BARU: Pilihan Layanan Opsional & Input Harga Manual oleh Admin
+  // State Pilihan Layanan Opsional & Input Harga Manual
   const [serviceTypeInput, setServiceTypeInput] = useState('');
   const [customServicePrice, setCustomServicePrice] = useState(0);
 
@@ -174,9 +174,9 @@ export default function App() {
   const [showTherapyModal, setShowTherapyModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [receiptType, setReceiptType] = useState('invoice'); // 'invoice' atau 'paid'
+  const [receiptType, setReceiptType] = useState('invoice');
 
-  // Form State Edit Pasien
+  // Form State Edit Pasien (Termasuk Opsi Layanan & Harga Kustom Admin)
   const [editPatientName, setEditPatientName] = useState('');
   const [editAge, setEditAge] = useState('');
   const [editVisitNumber, setEditVisitNumber] = useState(1);
@@ -185,6 +185,8 @@ export default function App() {
   const [editAdminFee, setEditAdminFee] = useState(30000);
   const [editPsychologist, setEditPsychologist] = useState('');
   const [editTherapist, setEditTherapist] = useState('');
+  const [editServiceType, setEditServiceType] = useState('');
+  const [editCustomServicePrice, setEditCustomServicePrice] = useState(0);
 
   // Form Rekam Medis Psikolog
   const [serviceType, setServiceType] = useState('assessment');
@@ -302,7 +304,6 @@ export default function App() {
       const isDirect = registrationType === 'terapis_direct';
       const selectedTherapist = isDirect ? (directTherapist || activeTherapistList[0]) : null;
 
-      // Penentuan Kategori Layanan
       const finalServiceType = isDirect 
         ? directTherapyMethod 
         : (serviceTypeInput ? serviceTypeInput : null);
@@ -311,7 +312,6 @@ export default function App() {
         ? `[Klien: ${patientName} - HP: ${patientPhone}] (Layanan Langsung Terapis: ${directTherapyMethod})`
         : `[Klien: ${patientName} - HP: ${patientPhone}]`;
 
-      // Kalkulasi Biaya Total = Harga Layanan Kustom Admin + Biaya Admin
       const totalCalculatedPrice = Number(customServicePrice) + Number(adminFeeInput);
 
       const { error } = await supabase.from('appointments').insert([
@@ -349,7 +349,7 @@ export default function App() {
     }
   };
 
-  // 2. EDIT DATA PENDAFTARAN
+  // 2. EDIT DATA PENDAFTARAN (DENGAN LAYANAN & HARGA KUSTOM)
   const handleOpenEditModal = (item) => {
     setSelectedAppt(item);
     setEditPatientName(item.patient_name || '');
@@ -360,14 +360,19 @@ export default function App() {
     setEditAdminFee(item.admin_fee || 30000);
     setEditPsychologist(item.doctor_name || LIST_PSIKOLOG[0].label);
     setEditTherapist(item.assigned_terapis || '');
+
+    // Set awal untuk Layanan Kustom & Harga Layanan
+    setEditServiceType(item.service_type || item.category || '');
+    const servicePriceOnly = (item.price || 30000) - (item.admin_fee || 30000);
+    setEditCustomServicePrice(servicePriceOnly > 0 ? servicePriceOnly : 0);
+
     setShowEditModal(true);
   };
 
   const handleSaveEditAppointment = async () => {
     if (!selectedAppt) return;
     try {
-      const currentServicePrice = (selectedAppt.price || 30000) - (selectedAppt.admin_fee || 30000);
-      const newTotalPrice = currentServicePrice + Number(editAdminFee);
+      const newTotalPrice = Number(editCustomServicePrice) + Number(editAdminFee);
 
       const { error } = await supabase.from('appointments').update({
         patient_name: editPatientName,
@@ -377,12 +382,14 @@ export default function App() {
         booking_time: editBookingTime,
         admin_fee: Number(editAdminFee),
         price: newTotalPrice,
+        service_type: editServiceType || null,
+        category: editServiceType || null,
         doctor_name: editPsychologist,
         assigned_terapis: editTherapist || null
       }).eq('id', selectedAppt.id);
 
       if (error) throw error;
-      alert("Data pendaftaran berhasil diperbarui!");
+      alert("Data pendaftaran & layanan berhasil diperbarui!");
       setShowEditModal(false);
       fetchAppointments();
     } catch (err) {
@@ -390,7 +397,7 @@ export default function App() {
     }
   };
 
-  // 3. PSIKOLOG: Input Anamnesa & Diagnosa (Selesai Sesi -> Tampil Invoice)
+  // 3. PSIKOLOG: Input Anamnesa & Diagnosa
   const handleSavePsychologistRecord = async () => {
     if (!selectedAppt) return;
     try {
@@ -428,7 +435,6 @@ export default function App() {
       alert("Sesi telah selesai & Rekam medis berhasil disimpan! Menampilkan Invoice Pembayaran...");
       setShowMedicalModal(false);
 
-      // Buka Otomatis Modal Nota/Invoice dengan QRIS Pembayaran
       const updatedAppt = { ...selectedAppt, ...updatedData };
       setSelectedAppt(updatedAppt);
       setReceiptType('invoice');
@@ -505,11 +511,10 @@ export default function App() {
     }
   };
 
-  // FUNGSI KIRIM WA RECEIPT / NOTA LANGSUNG KE CLIENT
+  // KIRIM WA RECEIPT
   const sendWaReceipt = () => {
     if (!selectedAppt) return;
     
-    // Ekstrak Nomor HP jika tertera di catatan
     const phoneMatch = selectedAppt.notes && selectedAppt.notes.match(/HP:\s*([0-9]+)/);
     let rawPhone = phoneMatch ? phoneMatch[1] : '';
     if (rawPhone.startsWith('0')) {
@@ -550,7 +555,7 @@ export default function App() {
     window.open(targetUrl, '_blank');
   };
 
-  // FUNGSI PRINT / CETAK STRUK
+  // PRINT CETAK STRUK
   const executePrintOnly = () => {
     const printableContent = document.getElementById('printable-receipt');
     if (!printableContent) return;
@@ -651,7 +656,7 @@ export default function App() {
     }, 250);
   };
 
-  // FUNGSI DOWNLOAD FILE HTML/PDF LANGSUNG
+  // DOWNLOAD FILE HTML/PDF
   const executeDownloadPdfDirect = () => {
     const patientName = (selectedAppt?.patient_name || 'Pasien').replace(/[^a-zA-Z0-9]/g, '_');
     const fileName = `${receiptType.toUpperCase()}_BenangMerah_${patientName}_${selectedAppt?.booking_date || ''}.html`;
@@ -1221,7 +1226,7 @@ export default function App() {
                       </div>
                     )}
 
-                    {/* FITUR BARU: OPSI LAYANAN DAN INPUT HARGA KUSTOM ADMIN */}
+                    {/* OPSI LAYANAN DAN INPUT HARGA KUSTOM ADMIN */}
                     {registrationType === 'psikolog' && (
                       <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/80 space-y-2.5">
                         <div>
@@ -1373,7 +1378,6 @@ export default function App() {
                         const docLower = (item.doctor_name || '').toLowerCase();
                         const currentNameLower = userName.toLowerCase();
 
-                        // PENGECEKAN FLEXIBLE MATCHING PSIKOLOG
                         const isMyPsychologistPatient = item.doctor_name && (
                           LIST_PSIKOLOG.some((p) => {
                             const matchesUser = p.keywords.some((key) => currentNameLower.includes(key));
@@ -1382,7 +1386,6 @@ export default function App() {
                           }) || docLower.includes(currentNameLower)
                         );
 
-                        // PENGECEKAN TERAPIS FLEKSIBEL
                         const assignedLower = (item.assigned_terapis || '').toLowerCase();
 
                         const isMyTherapistPatient = item.assigned_terapis && (
@@ -1395,7 +1398,6 @@ export default function App() {
                         let canReadNotes = false;
                         let hiddenReason = '[PRIVACY MEDIS]';
 
-                        // PERATURAN PRIVASI MEDIS REKAM MEDIS
                         if (userRole === 'psikolog') {
                           if (!isDirectTherapy && isMyPsychologistPatient) {
                             canReadNotes = true;
@@ -1411,7 +1413,6 @@ export default function App() {
                             hiddenReason = '[PRIVACY MEDIS]';
                           }
                         } else {
-                          // Admin biasa / IT Admin / role lainnya
                           canReadNotes = false;
                           hiddenReason = '[PRIVACY MEDIS]';
                         }
@@ -1483,7 +1484,6 @@ export default function App() {
 
                               {canAccessAdminForm && (
                                 <>
-                                  {/* TOMBOL EDIT PENDAFTARAN HANYA TAMPIL JIKA BELUM LUNAS */}
                                   {item.status !== 'lunas' && (
                                     <button
                                       onClick={() => handleOpenEditModal(item)}
@@ -1525,10 +1525,10 @@ export default function App() {
 
         </main>
 
-        {/* MODAL EDIT DATA PENDAFTARAN */}
+        {/* MODAL EDIT DATA PENDAFTARAN (DENGAN PILIHAN LAYANAN & HARGA KUSTOM) */}
         {showEditModal && selectedAppt && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-fade-up">
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center border-b pb-3">
                 <h3 className="font-bold text-gray-800 text-base flex items-center gap-1.5 text-[#701A24]">
                   <EditIcon /> Edit Detail Pendaftaran Pasien
@@ -1594,6 +1594,43 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* EDIT OPSI LAYANAN DAN HARGA LAYANAN KUSTOM */}
+                <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/80 space-y-2.5">
+                  <div>
+                    <label className="block font-semibold text-amber-900 mb-1">
+                      Opsi Layanan
+                    </label>
+                    <select
+                      value={editServiceType}
+                      onChange={(e) => setEditServiceType(e.target.value)}
+                      className="w-full p-2.5 border border-amber-300 rounded-lg outline-none font-medium text-gray-800 bg-white"
+                    >
+                      <option value="">-- Belum Ditentukan / Ikuti Form Psikolog --</option>
+                      <option value="Assessment / Intake Interview">Assessment / Intake Interview</option>
+                      <option value="Konseling Individu">Konseling Individu</option>
+                      <option value="Psikoterapi">Psikoterapi</option>
+                      <option value="Terapi Anak">Terapi Anak</option>
+                      <option value="Konseling Pasangan (Couple)">Konseling Pasangan (Couple)</option>
+                      <option value="Konseling Keluarga">Konseling Keluarga</option>
+                      <option value="Play and Grow">Play and Grow</option>
+                      <option value="Pra Literasi">Pra Literasi</option>
+                      <option value="Layanan Lainnya">Layanan Lainnya / Manual</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-amber-900 mb-1">
+                      Harga Layanan Kustom (Rp)
+                    </label>
+                    <input
+                      type="number"
+                      value={editCustomServicePrice}
+                      onChange={(e) => setEditCustomServicePrice(e.target.value)}
+                      className="w-full p-2.5 border border-amber-300 rounded-lg outline-none font-semibold text-gray-800 bg-white"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block font-semibold text-gray-700 mb-1">Biaya Administrasi Klinik (Rp)</label>
                   <input
@@ -1602,6 +1639,13 @@ export default function App() {
                     onChange={(e) => setEditAdminFee(e.target.value)}
                     className="w-full p-2.5 border rounded-lg outline-none font-semibold text-gray-800"
                   />
+                </div>
+
+                <div className="p-2.5 bg-[#FAF8F5] rounded-xl border border-gray-200 font-semibold text-gray-700 flex justify-between items-center text-[11px]">
+                  <span>Estimasi Total Biaya Baru:</span>
+                  <span className="text-[#701A24] font-bold text-xs">
+                    Rp {(Number(editCustomServicePrice) + Number(editAdminFee)).toLocaleString('id-ID')}
+                  </span>
                 </div>
 
                 <div>
@@ -1614,6 +1658,7 @@ export default function App() {
                     {LIST_PSIKOLOG.map((p, idx) => (
                       <option key={idx} value={p.label}>{p.label}</option>
                     ))}
+                    <option value="Layanan Langsung Terapis">Layanan Langsung Terapis</option>
                   </select>
                 </div>
 
@@ -1815,12 +1860,11 @@ export default function App() {
           </div>
         )}
 
-        {/* MODAL 3: NOTA & INVOICE PEMBAYARAN KLINIK (DYNAMIC DUAL-STATE & ELEGAN) */}
+        {/* MODAL 3: NOTA & INVOICE PEMBAYARAN KLINIK */}
         {showReceiptModal && selectedAppt && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-up">
             <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border border-[#EADFD5]">
               
-              {/* HEADER MODAL ELEGANT & SIMPLE */}
               <div className="flex justify-between items-center border-b border-[#EADFD5] pb-3.5 print:hidden">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-full bg-[#701A24]/10 flex items-center justify-center text-[#701A24]">
@@ -1841,7 +1885,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* INDIKATOR STATUS SINGLE (MAROON THEME) */}
               <div className="print:hidden">
                 {selectedAppt.status === 'lunas' ? (
                   <div className="flex items-center justify-between px-3.5 py-2.5 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl text-emerald-800 text-xs font-semibold">
@@ -1866,10 +1909,8 @@ export default function App() {
                 )}
               </div>
 
-              {/* AREA STRUK / INVOICE CETAK */}
               <div id="printable-receipt" className="p-5 border border-dashed border-[#EADFD5] rounded-2xl space-y-3 font-mono bg-[#FAF8F5] relative overflow-hidden">
                 
-                {/* CAP STAMP STAMPEL LUNAS (HANYA TAMPIL JIKA SUDAH LUNAS) */}
                 {selectedAppt.status === 'lunas' && (
                   <div className="absolute right-4 bottom-12 pointer-events-none transform -rotate-12 opacity-90">
                     <div className="border-4 border-double border-[#701A24] rounded-xl px-3.5 py-1.5 text-center bg-white/95 shadow-sm">
@@ -1894,7 +1935,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* KOP NOTA / INVOICE */}
                 <div className="text-center border-b border-[#EADFD5] pb-2.5">
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <img 
@@ -1924,7 +1964,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* RINCIAN PASIEN & LAYANAN */}
                 <div className="space-y-1 text-[11px] font-sans">
                   <p><span className="text-gray-500">Tanggal & Sesi:</span> {selectedAppt.booking_date} ({selectedAppt.booking_time})</p>
                   <p><span className="text-gray-500">Klien / Pasien:</span> <strong className="text-gray-800">{selectedAppt.patient_name || selectedAppt.notes}</strong></p>
@@ -1935,7 +1974,6 @@ export default function App() {
                   )}
                 </div>
 
-                {/* QR CODE QRIS (HANYA MUNCUL JIKA BELUM LUNAS) */}
                 {selectedAppt.status !== 'lunas' && (
                   <div className="text-center bg-white p-3 rounded-2xl border border-[#701A24]/20 shadow-xs">
                     <p className="text-[10px] font-bold text-[#701A24] mb-1.5 font-sans flex items-center justify-center gap-1.5 uppercase tracking-wide">
@@ -1953,7 +1991,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* TOTAL BIAYA */}
                 <div className="border-t border-b border-[#EADFD5] py-2 space-y-1 text-xs font-sans">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Biaya Layanan / Sesi:</span>
@@ -1961,7 +1998,7 @@ export default function App() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Biaya Administrasi:</span>
-                    <span>Rp {(selectedAppt.admin_fee || 30000).toLocaleString('id-ID')}</span>
+                    <span>Rp ${(selectedAppt.admin_fee || 30000).toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between font-bold text-sm text-[#701A24] pt-1.5 border-t border-dashed border-[#EADFD5]">
                     <span>TOTAL {selectedAppt.status !== 'lunas' ? 'TAGIHAN' : 'BAYAR'}:</span>
@@ -1978,7 +2015,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* ACTION BUTTONS */}
               <div className="space-y-2 print:hidden pt-1">
                 {selectedAppt.status !== 'lunas' && (
                   <button
@@ -1999,7 +2035,6 @@ export default function App() {
                   Kirim WA ke Client
                 </button>
 
-                {/* CONDITIONAL LAYOUT: HANYA DOWNLOAD FILE JIKA LUNAS, CETAK STRUK DISENBUNYIKAN */}
                 {selectedAppt.status !== 'lunas' ? (
                   <div className="grid grid-cols-2 gap-2">
                     <button
