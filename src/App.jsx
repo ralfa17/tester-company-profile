@@ -176,7 +176,7 @@ export default function App() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [receiptType, setReceiptType] = useState('invoice');
 
-  // Form State Edit Pasien (Termasuk Opsi Layanan & Harga Kustom Admin)
+  // Form State Edit Pasien
   const [editPatientName, setEditPatientName] = useState('');
   const [editAge, setEditAge] = useState('');
   const [editVisitNumber, setEditVisitNumber] = useState(1);
@@ -312,7 +312,8 @@ export default function App() {
         ? `[Klien: ${patientName} - HP: ${patientPhone}] (Layanan Langsung Terapis: ${directTherapyMethod})`
         : `[Klien: ${patientName} - HP: ${patientPhone}]`;
 
-      const totalCalculatedPrice = Number(customServicePrice) + Number(adminFeeInput);
+      const parsedAdminFee = Number(adminFeeInput);
+      const totalCalculatedPrice = Number(customServicePrice) + parsedAdminFee;
 
       const { error } = await supabase.from('appointments').insert([
         {
@@ -329,7 +330,7 @@ export default function App() {
           age: parseInt(patientAge) || 0,
           visit_number: parseInt(visitNumber) || 1,
           price: totalCalculatedPrice,
-          admin_fee: Number(adminFeeInput)
+          admin_fee: parsedAdminFee
         },
       ]);
 
@@ -349,7 +350,7 @@ export default function App() {
     }
   };
 
-  // 2. EDIT DATA PENDAFTARAN (DENGAN LAYANAN & HARGA KUSTOM)
+  // 2. EDIT DATA PENDAFTARAN (FIX: PEMBACAAN AKURAT ADMIN FEE TAHAN RP 0)
   const handleOpenEditModal = (item) => {
     setSelectedAppt(item);
     setEditPatientName(item.patient_name || '');
@@ -357,13 +358,15 @@ export default function App() {
     setEditVisitNumber(item.visit_number || 1);
     setEditBookingDate(item.booking_date || '');
     setEditBookingTime(item.booking_time || '09:00');
-    setEditAdminFee(item.admin_fee || 30000);
+    
+    // PERBAIKAN: Baca admin_fee dengan nullish coalescing agar Rp 0 tidak kembali ke 30.000
+    const actualAdminFee = item.admin_fee ?? 30000;
+    setEditAdminFee(actualAdminFee);
     setEditPsychologist(item.doctor_name || LIST_PSIKOLOG[0].label);
     setEditTherapist(item.assigned_terapis || '');
 
-    // Set awal untuk Layanan Kustom & Harga Layanan
     setEditServiceType(item.service_type || item.category || '');
-    const servicePriceOnly = (item.price || 30000) - (item.admin_fee || 30000);
+    const servicePriceOnly = (item.price ?? 0) - actualAdminFee;
     setEditCustomServicePrice(servicePriceOnly > 0 ? servicePriceOnly : 0);
 
     setShowEditModal(true);
@@ -372,7 +375,8 @@ export default function App() {
   const handleSaveEditAppointment = async () => {
     if (!selectedAppt) return;
     try {
-      const newTotalPrice = Number(editCustomServicePrice) + Number(editAdminFee);
+      const parsedAdminFee = Number(editAdminFee);
+      const newTotalPrice = Number(editCustomServicePrice) + parsedAdminFee;
 
       const { error } = await supabase.from('appointments').update({
         patient_name: editPatientName,
@@ -380,7 +384,7 @@ export default function App() {
         visit_number: parseInt(editVisitNumber) || 1,
         booking_date: editBookingDate,
         booking_time: editBookingTime,
-        admin_fee: Number(editAdminFee),
+        admin_fee: parsedAdminFee,
         price: newTotalPrice,
         service_type: editServiceType || null,
         category: editServiceType || null,
@@ -389,7 +393,7 @@ export default function App() {
       }).eq('id', selectedAppt.id);
 
       if (error) throw error;
-      alert("Data pendaftaran & layanan berhasil diperbarui!");
+      alert("Data pendaftaran berhasil diperbarui!");
       setShowEditModal(false);
       fetchAppointments();
     } catch (err) {
@@ -401,7 +405,7 @@ export default function App() {
   const handleSavePsychologistRecord = async () => {
     if (!selectedAppt) return;
     try {
-      const adminFee = Number(selectedAppt.admin_fee || 30000);
+      const adminFee = Number(selectedAppt.admin_fee ?? 30000);
       const totalPrice = sessionDurationPrice + adminFee;
 
       let rujukanText = 'Rujukan: Tidak Ada';
@@ -432,7 +436,7 @@ export default function App() {
       const { error } = await supabase.from('appointments').update(updatedData).eq('id', selectedAppt.id);
 
       if (error) throw error;
-      alert("Sesi telah selesai & Rekam medis berhasil disimpan! Menampilkan Invoice Pembayaran...");
+      alert("Sesi telah selesai & Rekam medis berhasil disimpan!");
       setShowMedicalModal(false);
 
       const updatedAppt = { ...selectedAppt, ...updatedData };
@@ -511,7 +515,7 @@ export default function App() {
     }
   };
 
-  // KIRIM WA RECEIPT
+  // KIRIM WA RECEIPT (FIX: PEMBACAAN ADMIN FEE PRESISI)
   const sendWaReceipt = () => {
     if (!selectedAppt) return;
     
@@ -522,9 +526,9 @@ export default function App() {
     }
 
     const title = receiptType === 'invoice' ? 'INVOICE PEMBAYARAN' : 'NOTA BUKTI PEMBAYARAN LUNAS';
-    const totalPay = (selectedAppt.price || 30000).toLocaleString('id-ID');
-    const serviceFee = ((selectedAppt.price || 30000) - (selectedAppt.admin_fee || 30000)).toLocaleString('id-ID');
-    const adminFee = (selectedAppt.admin_fee || 30000).toLocaleString('id-ID');
+    const currentAdminFee = selectedAppt.admin_fee ?? 30000;
+    const currentTotalPrice = selectedAppt.price ?? 30000;
+    const currentServiceFee = Math.max(0, currentTotalPrice - currentAdminFee);
 
     let msg = `*BENANG MERAH - ${title}*\n`;
     msg += `-------------------------------------------\n`;
@@ -536,9 +540,9 @@ export default function App() {
       msg += `*Terapis:* ${selectedAppt.assigned_terapis}\n`;
     }
     msg += `-------------------------------------------\n`;
-    msg += `Biaya Layanan: Rp ${serviceFee}\n`;
-    msg += `Biaya Administrasi: Rp ${adminFee}\n`;
-    msg += `*TOTAL ${receiptType === 'invoice' ? 'TAGIHAN' : 'BAYAR'}: Rp ${totalPay}*\n`;
+    msg += `Biaya Layanan: Rp ${currentServiceFee.toLocaleString('id-ID')}\n`;
+    msg += `Biaya Administrasi: Rp ${currentAdminFee.toLocaleString('id-ID')}\n`;
+    msg += `*TOTAL ${receiptType === 'invoice' ? 'TAGIHAN' : 'BAYAR'}: Rp ${currentTotalPrice.toLocaleString('id-ID')}*\n`;
     msg += `-------------------------------------------\n`;
     if (receiptType === 'invoice') {
       msg += `Status: *BELUM DIBAYAR*\n`;
@@ -559,6 +563,10 @@ export default function App() {
   const executePrintOnly = () => {
     const printableContent = document.getElementById('printable-receipt');
     if (!printableContent) return;
+
+    const currentAdminFee = selectedAppt.admin_fee ?? 30000;
+    const currentTotalPrice = selectedAppt.price ?? 30000;
+    const currentServiceFee = Math.max(0, currentTotalPrice - currentAdminFee);
 
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
@@ -626,15 +634,15 @@ export default function App() {
             <div class="border-t border-b text-xs" style="margin: 10px 0; padding: 8px 0;">
               <div class="flex-between">
                 <span>Biaya Layanan / Sesi:</span>
-                <span>Rp ${((selectedAppt.price || 30000) - (selectedAppt.admin_fee || 30000)).toLocaleString('id-ID')}</span>
+                <span>Rp ${currentServiceFee.toLocaleString('id-ID')}</span>
               </div>
               <div class="flex-between">
                 <span>Biaya Administrasi:</span>
-                <span>Rp ${(selectedAppt.admin_fee || 30000).toLocaleString('id-ID')}</span>
+                <span>Rp ${currentAdminFee.toLocaleString('id-ID')}</span>
               </div>
               <div class="flex-between font-bold text-sm" style="color:#701A24; margin-top:6px; border-top:1px dashed #ccc; padding-top:6px;">
                 <span>TOTAL ${receiptType === 'invoice' ? 'TAGIHAN' : 'BAYAR'}:</span>
-                <span>Rp ${(selectedAppt.price || 30000).toLocaleString('id-ID')}</span>
+                <span>Rp ${currentTotalPrice.toLocaleString('id-ID')}</span>
               </div>
             </div>
 
@@ -660,6 +668,10 @@ export default function App() {
   const executeDownloadPdfDirect = () => {
     const patientName = (selectedAppt?.patient_name || 'Pasien').replace(/[^a-zA-Z0-9]/g, '_');
     const fileName = `${receiptType.toUpperCase()}_BenangMerah_${patientName}_${selectedAppt?.booking_date || ''}.html`;
+
+    const currentAdminFee = selectedAppt.admin_fee ?? 30000;
+    const currentTotalPrice = selectedAppt.price ?? 30000;
+    const currentServiceFee = Math.max(0, currentTotalPrice - currentAdminFee);
 
     const content = `
       <!DOCTYPE html>
@@ -717,15 +729,15 @@ export default function App() {
             <div class="border-t border-b text-xs" style="margin: 10px 0; padding: 8px 0;">
               <div class="flex-between">
                 <span>Biaya Layanan / Sesi:</span>
-                <span>Rp ${((selectedAppt.price || 30000) - (selectedAppt.admin_fee || 30000)).toLocaleString('id-ID')}</span>
+                <span>Rp ${currentServiceFee.toLocaleString('id-ID')}</span>
               </div>
               <div class="flex-between">
                 <span>Biaya Administrasi:</span>
-                <span>Rp ${(selectedAppt.admin_fee || 30000).toLocaleString('id-ID')}</span>
+                <span>Rp ${currentAdminFee.toLocaleString('id-ID')}</span>
               </div>
               <div class="flex-between font-bold text-sm" style="color:#701A24; margin-top:6px; border-top:1px dashed #ccc; padding-top:6px;">
                 <span>TOTAL ${receiptType === 'invoice' ? 'TAGIHAN' : 'BAYAR'}:</span>
-                <span>Rp ${(selectedAppt.price || 30000).toLocaleString('id-ID')}</span>
+                <span>Rp ${currentTotalPrice.toLocaleString('id-ID')}</span>
               </div>
             </div>
 
@@ -795,8 +807,8 @@ export default function App() {
           <td>${(item.service_type || item.category || 'Belum diisi').toUpperCase()}</td>
           <td>${item.doctor_name || '-'}</td>
           <td>${item.assigned_terapis || 'Tidak Ada'}</td>
-          <td>Rp ${(item.admin_fee || 30000).toLocaleString('id-ID')}</td>
-          <td>Rp ${(item.price || 30000).toLocaleString('id-ID')}</td>
+          <td>Rp ${(item.admin_fee ?? 30000).toLocaleString('id-ID')}</td>
+          <td>Rp ${(item.price ?? 30000).toLocaleString('id-ID')}</td>
           <td>${(item.status || 'pending').toUpperCase()}</td>
         </tr>
       `;
@@ -1008,7 +1020,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#FAF8F5] text-gray-800 font-sans print:bg-white animate-fade-up">
         
-        {/* HEADER DASHBOARD DENGAN LOGO PNG */}
+        {/* HEADER DASHBOARD */}
         <header className="bg-white/90 backdrop-blur-md border-b border-[#EADFD5] sticky top-0 z-10 shadow-sm print:hidden">
           <div className="max-w-7xl mx-auto px-6 py-3.5 flex justify-between items-center">
             <div className="flex items-center space-x-3">
@@ -1226,7 +1238,6 @@ export default function App() {
                       </div>
                     )}
 
-                    {/* OPSI LAYANAN DAN INPUT HARGA KUSTOM ADMIN */}
                     {registrationType === 'psikolog' && (
                       <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/80 space-y-2.5">
                         <div>
@@ -1417,6 +1428,9 @@ export default function App() {
                           hiddenReason = '[PRIVACY MEDIS]';
                         }
 
+                        // PEMBACAAN BIAYA ADMIN YANG TAHAN DENGAN ANGKA 0
+                        const itemAdminFee = item.admin_fee ?? 30000;
+
                         return (
                           <tr key={item.id} className="hover:bg-[#FAF8F5]/60 transition-colors">
                             <td className="p-3">
@@ -1433,7 +1447,7 @@ export default function App() {
                               </div>
 
                               <p className="text-[11px] text-emerald-700 font-semibold mt-1">
-                                Biaya Admin: Rp {(item.admin_fee || 30000).toLocaleString('id-ID')}
+                                Biaya Admin: Rp {itemAdminFee.toLocaleString('id-ID')}
                               </p>
                             </td>
                             <td className="p-3 font-medium text-gray-800">{item.doctor_name || '-'}</td>
@@ -1525,7 +1539,7 @@ export default function App() {
 
         </main>
 
-        {/* MODAL EDIT DATA PENDAFTARAN (DENGAN PILIHAN LAYANAN & HARGA KUSTOM) */}
+        {/* MODAL EDIT DATA PENDAFTARAN */}
         {showEditModal && selectedAppt && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-fade-up">
             <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
@@ -1594,7 +1608,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* EDIT OPSI LAYANAN DAN HARGA LAYANAN KUSTOM */}
                 <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/80 space-y-2.5">
                   <div>
                     <label className="block font-semibold text-amber-900 mb-1">
@@ -1991,18 +2004,19 @@ export default function App() {
                   </div>
                 )}
 
+                {/* TOTAL BIAYA (DENGAN PENANGANAN LENGKAP ANGKA 0) */}
                 <div className="border-t border-b border-[#EADFD5] py-2 space-y-1 text-xs font-sans">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Biaya Layanan / Sesi:</span>
-                    <span>Rp {((selectedAppt.price || 30000) - (selectedAppt.admin_fee || 30000)).toLocaleString('id-ID')}</span>
+                    <span>Rp {Math.max(0, (selectedAppt.price ?? 30000) - (selectedAppt.admin_fee ?? 30000)).toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Biaya Administrasi:</span>
-                    <span>Rp ${(selectedAppt.admin_fee || 30000).toLocaleString('id-ID')}</span>
+                    <span>Rp {(selectedAppt.admin_fee ?? 30000).toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between font-bold text-sm text-[#701A24] pt-1.5 border-t border-dashed border-[#EADFD5]">
                     <span>TOTAL {selectedAppt.status !== 'lunas' ? 'TAGIHAN' : 'BAYAR'}:</span>
-                    <span>Rp {(selectedAppt.price || 30000).toLocaleString('id-ID')}</span>
+                    <span>Rp {(selectedAppt.price ?? 30000).toLocaleString('id-ID')}</span>
                   </div>
                 </div>
 
