@@ -2,6 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import Auth from './components/Auth';
 
+// MASTER KODE VOUCHER & NOMINAL DISKON
+const MASTER_VOUCHERS = {
+  'OPENING100K': 100000,
+  'BENANGMERAH100': 100000
+};
+
+// BATAS MAX KAN BANYAK PEMAKAIAN VOUCHER OPENING
+const MAX_OPENING_VOUCHER_QUOTA = 14;
+
+// MASTER HARGA STANDAR LAYANAN PSIKOLOG
+const SERVICE_PRICES = {
+  'Assessment / Intake Interview': 300000,
+  'Konseling Individu': 300000,
+  'Psikoterapi': 350000,
+  'Terapi Anak': 300000,
+  'Konseling Pasangan (Couple)': 600000,
+  'Konseling Keluarga': 600000,
+  'Play and Grow': 250000,
+  'Pra Literasi': 250000
+};
+
 // ============================================================
 // ELEGANT SVG ICON COMPONENTS
 // ============================================================
@@ -165,6 +186,20 @@ export default function App() {
   const [serviceTypeInput, setServiceTypeInput] = useState('');
   const [customServicePrice, setCustomServicePrice] = useState(0);
 
+  // STATE VOUCHER DISKON & PENGECEKAN KUOTA PASIEN
+  const [voucherInput, setVoucherInput] = useState('');
+  const [discountApplied, setDiscountApplied] = useState(0);
+  const [voucherMsg, setVoucherMsg] = useState('');
+  const [checkingVoucher, setCheckingVoucher] = useState(false);
+
+  // STATE BARU: Menghitung Pemakaian Voucher
+  const [voucherUsedCount, setVoucherUsedCount] = useState(0);
+
+  // STATE BARU: Khusus Modal Edit Pasien
+  const [editVoucherInput, setEditVoucherInput] = useState('');
+  const [editDiscountApplied, setEditDiscountApplied] = useState(0);
+  const [editVoucherMsg, setEditVoucherMsg] = useState('');
+
   const [submitting, setSubmitting] = useState(false);
   const [bookingMsg, setBookingMsg] = useState('');
 
@@ -200,6 +235,77 @@ export default function App() {
 
   // Form Progress Terapis
   const [therapyProgress, setTherapyProgress] = useState('');
+
+  // FUNGSI BARU: Hitung Pemakaian Voucher dari Supabase
+  const fetchVoucherUsage = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('id')
+        .ilike('notes', '%OPENING100K%');
+
+      if (!error && data) {
+        setVoucherUsedCount(data.length);
+      }
+    } catch (err) {
+      console.error("Gagal memuat kuota voucher:", err.message);
+    }
+  };
+
+  // FUNGSI PILIH LAYANAN & OTOMATIS HARGA STANDAR
+  const handleSelectService = (selectedService) => {
+    setServiceTypeInput(selectedService);
+    if (SERVICE_PRICES[selectedService]) {
+      setCustomServicePrice(SERVICE_PRICES[selectedService]);
+    } else {
+      setCustomServicePrice(0);
+    }
+  };
+
+  // FUNGSI TERAPKAN KODE VOUCHER DENGAN VALIDASI KUOTA MAKSIMAL
+  const handleApplyVoucher = async () => {
+    const code = voucherInput.trim().toUpperCase();
+    if (!code) return;
+
+    if (MASTER_VOUCHERS[code]) {
+      setCheckingVoucher(true);
+      try {
+        if (code === 'OPENING100K') {
+          // Query ke Database Supabase untuk menghitung berapa kali OPENING100K sudah digunakan
+          const { data, error } = await supabase
+            .from('appointments')
+            .select('id')
+            .ilike('notes', '%OPENING100K%');
+
+          if (error) throw error;
+
+          const usedCount = data ? data.length : 0;
+
+          if (usedCount >= MAX_OPENING_VOUCHER_QUOTA) {
+            setDiscountApplied(0);
+            setVoucherMsg(`❌ Kuota voucher ${code} sudah HABIS (Telah digunakan ${usedCount}/${MAX_OPENING_VOUCHER_QUOTA} kali).`);
+          } else {
+            const discountValue = MASTER_VOUCHERS[code];
+            setDiscountApplied(discountValue);
+            setVoucherMsg(`✓ Voucher ${code} Berhasil! Diskon Rp ${discountValue.toLocaleString('id-ID')} (Sisa Kuota: ${MAX_OPENING_VOUCHER_QUOTA - usedCount - 1}x lagi)`);
+          }
+        } else {
+          // Voucher umum lainnya
+          const discountValue = MASTER_VOUCHERS[code];
+          setDiscountApplied(discountValue);
+          setVoucherMsg(`✓ Voucher ${code} (Diskon Rp ${discountValue.toLocaleString('id-ID')}) Diterapkan!`);
+        }
+      } catch (err) {
+        console.error("Gagal verifikasi voucher:", err.message);
+        setVoucherMsg("❌ Terjadi kesalahan saat memverifikasi kuota voucher.");
+      }  {
+        setCheckingVoucher(false);
+      }
+    } else {
+      setDiscountApplied(0);
+      setVoucherMsg('❌ Kode voucher tidak valid.');
+    }
+  };
 
   // Fetch Terapis Aktif dari Database Supabase
   const fetchActiveTherapists = async () => {
@@ -291,6 +397,7 @@ export default function App() {
   useEffect(() => {
     if (session && !teamAccessDenied) {
       fetchAppointments();
+      fetchVoucherUsage();
     }
   }, [session, userRole, teamAccessDenied]);
 
@@ -308,12 +415,18 @@ export default function App() {
         ? directTherapyMethod 
         : (serviceTypeInput ? serviceTypeInput : null);
 
-      const initialNotes = isDirect 
+      let initialNotes = isDirect 
         ? `[Klien: ${patientName} - HP: ${patientPhone}] (Layanan Langsung Terapis: ${directTherapyMethod})`
         : `[Klien: ${patientName} - HP: ${patientPhone}]`;
 
+      if (discountApplied > 0) {
+        initialNotes += ` [Voucher Used: ${voucherInput.toUpperCase()} - Diskon Rp ${discountApplied.toLocaleString('id-ID')}]`;
+      }
+
       const parsedAdminFee = Number(adminFeeInput);
-      const totalCalculatedPrice = Number(customServicePrice) + parsedAdminFee;
+      const baseServicePrice = Number(customServicePrice);
+      const finalServicePriceAfterDiscount = Math.max(0, baseServicePrice - discountApplied);
+      const totalCalculatedPrice = finalServicePriceAfterDiscount + parsedAdminFee;
 
       const { error } = await supabase.from('appointments').insert([
         {
@@ -337,6 +450,7 @@ export default function App() {
       if (error) throw error;
       setBookingMsg('Pendaftaran pasien berhasil disimpan!');
       fetchAppointments();
+      fetchVoucherUsage();
       setPatientName('');
       setPatientPhone('');
       setPatientAge('');
@@ -344,6 +458,9 @@ export default function App() {
       setBookingTime('');
       setServiceTypeInput('');
       setCustomServicePrice(0);
+      setVoucherInput('');
+      setDiscountApplied(0);
+      setVoucherMsg('');
     } catch (err) {
       setBookingMsg(`Gagal: ${err.message}`);
     } finally {
@@ -364,19 +481,77 @@ export default function App() {
     setEditAdminFee(actualAdminFee);
     setEditPsychologist(item.doctor_name || LIST_PSIKOLOG[0].label);
     setEditTherapist(item.assigned_terapis || '');
-
     setEditServiceType(item.service_type || item.category || '');
-    const servicePriceOnly = (item.price ?? 0) - actualAdminFee;
-    setEditCustomServicePrice(servicePriceOnly > 0 ? servicePriceOnly : 0);
 
+    // Cek apakah di notes pasien sudah ada voucher OPENING100K
+    const hasOpeningVoucher = item.notes && item.notes.includes('OPENING100K');
+    if (hasOpeningVoucher) {
+      setEditVoucherInput('OPENING100K');
+      setEditDiscountApplied(100000);
+      setEditVoucherMsg('✓ Voucher OPENING100K terpasang (Diskon Rp 100.000)');
+    } else {
+      setEditVoucherInput('');
+      setEditDiscountApplied(0);
+      setEditVoucherMsg('');
+    }
+
+    const basePrice = SERVICE_PRICES[item.service_type] || 
+      ((item.price ?? 30000) - actualAdminFee + (hasOpeningVoucher ? 100000 : 0));
+    
+    setEditCustomServicePrice(basePrice > 0 ? basePrice : 0);
     setShowEditModal(true);
+  };
+
+  // FUNGSI BARU: Validasi Voucher di Modal Edit
+  const handleApplyEditVoucher = async () => {
+    const code = editVoucherInput.trim().toUpperCase();
+    if (!code) {
+      setEditDiscountApplied(0);
+      setEditVoucherMsg('');
+      return;
+    }
+
+    if (MASTER_VOUCHERS[code]) {
+      if (code === 'OPENING100K') {
+        const { data } = await supabase
+          .from('appointments')
+          .select('id')
+          .ilike('notes', '%OPENING100K%');
+
+        const isAlreadyUsing = selectedAppt?.notes?.includes('OPENING100K');
+        const usedCount = (data ? data.length : 0) - (isAlreadyUsing ? 1 : 0);
+
+        if (usedCount >= MAX_OPENING_VOUCHER_QUOTA) {
+          setEditDiscountApplied(0);
+          setEditVoucherMsg(`❌ Kuota voucher ${code} sudah HABIS (${usedCount}/${MAX_OPENING_VOUCHER_QUOTA}).`);
+        } else {
+          const discountValue = MASTER_VOUCHERS[code];
+          setEditDiscountApplied(discountValue);
+          setEditVoucherMsg(`✓ Voucher ${code} Berhasil! Diskon Rp ${discountValue.toLocaleString('id-ID')}`);
+        }
+      } else {
+        const discountValue = MASTER_VOUCHERS[code];
+        setEditDiscountApplied(discountValue);
+        setEditVoucherMsg(`✓ Voucher ${code} Diterapkan!`);
+      }
+    } else {
+      setEditDiscountApplied(0);
+      setEditVoucherMsg('❌ Kode voucher tidak valid.');
+    }
   };
 
   const handleSaveEditAppointment = async () => {
     if (!selectedAppt) return;
     try {
       const parsedAdminFee = Number(editAdminFee);
-      const newTotalPrice = Number(editCustomServicePrice) + parsedAdminFee;
+      const baseServicePrice = Number(editCustomServicePrice);
+      const finalServicePrice = Math.max(0, baseServicePrice - editDiscountApplied);
+      const newTotalPrice = finalServicePrice + parsedAdminFee;
+
+      let cleanNotes = (selectedAppt.notes || '').replace(/\s*\[Voucher Used:[^\]]+\]/g, '');
+      if (editDiscountApplied > 0) {
+        cleanNotes += ` [Voucher Used: ${editVoucherInput.toUpperCase()} - Diskon Rp ${editDiscountApplied.toLocaleString('id-ID')}]`;
+      }
 
       const { error } = await supabase.from('appointments').update({
         patient_name: editPatientName,
@@ -386,6 +561,7 @@ export default function App() {
         booking_time: editBookingTime || 'Sesuai Janji',
         admin_fee: parsedAdminFee,
         price: newTotalPrice,
+        notes: cleanNotes,
         service_type: editServiceType || null,
         category: editServiceType || null,
         doctor_name: editPsychologist,
@@ -396,6 +572,7 @@ export default function App() {
       alert("Data pendaftaran berhasil diperbarui!");
       setShowEditModal(false);
       fetchAppointments();
+      fetchVoucherUsage();
     } catch (err) {
       alert(`Gagal memperbarui data: ${err.message}`);
     }
@@ -528,7 +705,8 @@ export default function App() {
     const title = receiptType === 'invoice' ? 'INVOICE PEMBAYARAN' : 'NOTA BUKTI PEMBAYARAN LUNAS';
     const currentAdminFee = selectedAppt.admin_fee ?? 30000;
     const currentTotalPrice = selectedAppt.price ?? 30000;
-    const currentServiceFee = Math.max(0, currentTotalPrice - currentAdminFee);
+    const hasVoucher = selectedAppt.notes && selectedAppt.notes.includes('OPENING100K');
+    const baseServicePrice = SERVICE_PRICES[selectedAppt.service_type] || (currentTotalPrice - currentAdminFee + (hasVoucher ? 100000 : 0));
 
     let msg = `*BENANG MERAH - ${title}*\n`;
     msg += `-------------------------------------------\n`;
@@ -540,7 +718,10 @@ export default function App() {
       msg += `*Terapis:* ${selectedAppt.assigned_terapis}\n`;
     }
     msg += `-------------------------------------------\n`;
-    msg += `Biaya Layanan: Rp ${currentServiceFee.toLocaleString('id-ID')}\n`;
+    msg += `Biaya Layanan: Rp ${baseServicePrice.toLocaleString('id-ID')}\n`;
+    if (hasVoucher) {
+      msg += `Voucher Diskon (OPENING100K): -Rp 100.000\n`;
+    }
     msg += `Biaya Administrasi: Rp ${currentAdminFee.toLocaleString('id-ID')}\n`;
     msg += `*TOTAL ${receiptType === 'invoice' ? 'TAGIHAN' : 'BAYAR'}: Rp ${currentTotalPrice.toLocaleString('id-ID')}*\n`;
     msg += `-------------------------------------------\n`;
@@ -559,14 +740,15 @@ export default function App() {
     window.open(targetUrl, '_blank');
   };
 
-  // PRINT CETAK STRUK
+  // PRINT CETAK STRUK FIX FIX BIAYA ADMIN & VOUCHER
   const executePrintOnly = () => {
     const printableContent = document.getElementById('printable-receipt');
     if (!printableContent) return;
 
     const currentAdminFee = selectedAppt.admin_fee ?? 30000;
     const currentTotalPrice = selectedAppt.price ?? 30000;
-    const currentServiceFee = Math.max(0, currentTotalPrice - currentAdminFee);
+    const hasVoucher = selectedAppt.notes && selectedAppt.notes.includes('OPENING100K');
+    const baseServicePrice = SERVICE_PRICES[selectedAppt.service_type] || (currentTotalPrice - currentAdminFee + (hasVoucher ? 100000 : 0));
 
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
@@ -634,12 +816,21 @@ export default function App() {
             <div class="border-t border-b text-xs" style="margin: 10px 0; padding: 8px 0;">
               <div class="flex-between">
                 <span>Biaya Layanan / Sesi:</span>
-                <span>Rp ${currentServiceFee.toLocaleString('id-ID')}</span>
+                <span>Rp ${baseServicePrice.toLocaleString('id-ID')}</span>
               </div>
+
+              ${hasVoucher ? `
+                <div class="flex-between" style="color:#047857; font-weight:bold;">
+                  <span>Voucher Diskon (OPENING100K):</span>
+                  <span>- Rp 100.000</span>
+                </div>
+              ` : ''}
+
               <div class="flex-between">
                 <span>Biaya Administrasi:</span>
                 <span>Rp ${currentAdminFee.toLocaleString('id-ID')}</span>
               </div>
+
               <div class="flex-between font-bold text-sm" style="color:#701A24; margin-top:6px; border-top:1px dashed #ccc; padding-top:6px;">
                 <span>TOTAL ${receiptType === 'invoice' ? 'TAGIHAN' : 'BAYAR'}:</span>
                 <span>Rp ${currentTotalPrice.toLocaleString('id-ID')}</span>
@@ -664,14 +855,15 @@ export default function App() {
     }, 250);
   };
 
-  // DOWNLOAD FILE HTML/PDF
+  // DOWNLOAD FILE HTML/PDF FIX
   const executeDownloadPdfDirect = () => {
     const patientName = (selectedAppt?.patient_name || 'Pasien').replace(/[^a-zA-Z0-9]/g, '_');
     const fileName = `${receiptType.toUpperCase()}_BenangMerah_${patientName}_${selectedAppt?.booking_date || ''}.html`;
 
     const currentAdminFee = selectedAppt.admin_fee ?? 30000;
     const currentTotalPrice = selectedAppt.price ?? 30000;
-    const currentServiceFee = Math.max(0, currentTotalPrice - currentAdminFee);
+    const hasVoucher = selectedAppt.notes && selectedAppt.notes.includes('OPENING100K');
+    const baseServicePrice = SERVICE_PRICES[selectedAppt.service_type] || (currentTotalPrice - currentAdminFee + (hasVoucher ? 100000 : 0));
 
     const content = `
       <!DOCTYPE html>
@@ -729,12 +921,21 @@ export default function App() {
             <div class="border-t border-b text-xs" style="margin: 10px 0; padding: 8px 0;">
               <div class="flex-between">
                 <span>Biaya Layanan / Sesi:</span>
-                <span>Rp ${currentServiceFee.toLocaleString('id-ID')}</span>
+                <span>Rp ${baseServicePrice.toLocaleString('id-ID')}</span>
               </div>
+
+              ${hasVoucher ? `
+                <div class="flex-between" style="color:#047857; font-weight:bold;">
+                  <span>Voucher Diskon (OPENING100K):</span>
+                  <span>- Rp 100.000</span>
+                </div>
+              ` : ''}
+
               <div class="flex-between">
                 <span>Biaya Administrasi:</span>
                 <span>Rp ${currentAdminFee.toLocaleString('id-ID')}</span>
               </div>
+
               <div class="flex-between font-bold text-sm" style="color:#701A24; margin-top:6px; border-top:1px dashed #ccc; padding-top:6px;">
                 <span>TOTAL ${receiptType === 'invoice' ? 'TAGIHAN' : 'BAYAR'}:</span>
                 <span>Rp ${currentTotalPrice.toLocaleString('id-ID')}</span>
@@ -1097,6 +1298,32 @@ export default function App() {
             </div>
           </div>
 
+          {/* BANNER INDIKATOR KUOTA REAL-TIME */}
+          <div className="bg-gradient-to-r from-amber-500/10 to-amber-600/10 border border-amber-300 p-3.5 rounded-xl mb-6 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                <span>🏷️</span> Kuota Voucher Promo: OPENING100K
+              </p>
+              <p className="text-[11px] text-amber-800 font-medium mt-0.5">
+                Potongan Rp 100.000 per pendaftaran
+              </p>
+            </div>
+            <div className="text-right">
+              <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                voucherUsedCount >= MAX_OPENING_VOUCHER_QUOTA 
+                  ? 'bg-red-100 text-red-800 border-red-300' 
+                  : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+              }`}>
+                {voucherUsedCount} / {MAX_OPENING_VOUCHER_QUOTA} Terpakai
+              </span>
+              <p className="text-[10px] text-gray-500 mt-1">
+                {MAX_OPENING_VOUCHER_QUOTA - voucherUsedCount > 0 
+                  ? `Sisa Kuota: ${MAX_OPENING_VOUCHER_QUOTA - voucherUsedCount}x` 
+                  : '❌ Kuota Habis'}
+              </p>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print:block">
             
             {/* COLUMN 1: FORM INPUT PASIEN (ADMIN & SHIMA) */}
@@ -1242,41 +1469,64 @@ export default function App() {
                       <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/80 space-y-2.5">
                         <div>
                           <label className="block font-semibold text-amber-900 mb-1">
-                            Opsi Layanan Psikolog (Opsional)
+                            Opsi Layanan Psikolog
                           </label>
                           <select
                             value={serviceTypeInput}
-                            onChange={(e) => setServiceTypeInput(e.target.value)}
+                            onChange={(e) => handleSelectService(e.target.value)}
                             className="w-full px-3.5 py-2 border border-amber-300 rounded-lg outline-none font-medium text-gray-800 bg-white focus:ring-2 focus:ring-amber-500"
                           >
                             <option value="">-- Belum Ditentukan (Tunggu Form Psikolog) --</option>
-                            <option value="Assessment / Intake Interview">Assessment / Intake Interview</option>
-                            <option value="Konseling Individu">Konseling Individu</option>
-                            <option value="Psikoterapi">Psikoterapi</option>
-                            <option value="Terapi Anak">Terapi Anak</option>
-                            <option value="Konseling Pasangan (Couple)">Konseling Pasangan (Couple)</option>
-                            <option value="Konseling Keluarga">Konseling Keluarga</option>
+                            <option value="Assessment / Intake Interview">Assessment / Intake Interview (Rp 300.000)</option>
+                            <option value="Konseling Individu">Konseling Individu (Rp 300.000)</option>
+                            <option value="Psikoterapi">Psikoterapi (Rp 350.000)</option>
+                            <option value="Terapi Anak">Terapi Anak (Rp 300.000)</option>
+                            <option value="Konseling Pasangan (Couple)">Konseling Pasangan (Rp 600.000)</option>
+                            <option value="Konseling Keluarga">Konseling Keluarga (Rp 600.000)</option>
                             <option value="Layanan Lainnya">Layanan Lainnya / Manual</option>
                           </select>
-                          <p className="text-[10px] text-amber-800 italic mt-1">
-                            *Pilih jika transaksi pembayaran ingin langsung diproses tanpa menunggu Form Psikolog.
-                          </p>
                         </div>
 
                         <div>
                           <label className="block font-semibold text-amber-900 mb-1">
-                            Harga Layanan Kustom Admin (Rp)
+                            Harga Layanan Kustom (Rp)
                           </label>
                           <input
                             type="number"
-                            placeholder="0 (Atau ketik misal: 300000)"
+                            placeholder="0"
                             value={customServicePrice}
                             onChange={(e) => setCustomServicePrice(e.target.value)}
                             className="w-full px-3.5 py-2 border border-amber-300 rounded-lg outline-none font-semibold text-gray-800 bg-white focus:ring-2 focus:ring-amber-500"
                           />
-                          <p className="text-[10px] text-amber-800 italic mt-1">
-                            *Ketik nominal harga layanan yang disepakati (di luar Biaya Admin).
-                          </p>
+                        </div>
+
+                        {/* INPUT VOUCHER DISKON DENGAN VALIDASI KUOTA MAKSIMAL */}
+                        <div className="pt-1 border-t border-amber-200">
+                          <label className="block font-semibold text-amber-900 mb-1">
+                            Masukkan Kode Voucher (Limit 14x)
+                          </label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="Ketik: OPENING100K"
+                              value={voucherInput}
+                              onChange={(e) => setVoucherInput(e.target.value)}
+                              className="w-full px-3.5 py-1.5 border border-amber-300 rounded-lg outline-none uppercase font-bold text-gray-800 bg-white focus:ring-2 focus:ring-amber-500"
+                            />
+                            <button
+                              type="button"
+                              disabled={checkingVoucher}
+                              onClick={handleApplyVoucher}
+                              className="px-3 py-1.5 bg-amber-700 hover:bg-amber-800 text-white font-semibold rounded-lg text-xs whitespace-nowrap shadow-xs disabled:opacity-50"
+                            >
+                              {checkingVoucher ? 'Cek...' : 'Terapkan'}
+                            </button>
+                          </div>
+                          {voucherMsg && (
+                            <p className={`text-[11px] font-semibold mt-1 ${discountApplied > 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                              {voucherMsg}
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -1318,7 +1568,7 @@ export default function App() {
                     <div className="p-2.5 bg-[#FAF8F5] rounded-xl border border-gray-200 font-semibold text-gray-700 flex justify-between items-center text-[11px]">
                       <span>Estimasi Total Biaya:</span>
                       <span className="text-[#701A24] font-bold text-xs">
-                        Rp {(Number(customServicePrice) + Number(adminFeeInput)).toLocaleString('id-ID')}
+                        Rp {(Math.max(0, Number(customServicePrice) - discountApplied) + Number(adminFeeInput)).toLocaleString('id-ID')}
                       </span>
                     </div>
 
@@ -1634,6 +1884,34 @@ export default function App() {
                       className="w-full p-2.5 border border-amber-300 rounded-lg outline-none font-semibold text-gray-800 bg-white"
                     />
                   </div>
+
+                  {/* INPUT VOUCHER DI MODAL EDIT */}
+                  <div className="pt-2 border-t border-amber-200">
+                    <label className="block font-semibold text-amber-900 mb-1">
+                      Voucher Diskon
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Ketik: OPENING100K"
+                        value={editVoucherInput}
+                        onChange={(e) => setEditVoucherInput(e.target.value)}
+                        className="w-full px-3 py-1.5 border border-amber-300 rounded-lg outline-none uppercase font-bold text-gray-800 bg-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyEditVoucher}
+                        className="px-3 py-1.5 bg-amber-700 hover:bg-amber-800 text-white font-semibold rounded-lg text-xs whitespace-nowrap"
+                      >
+                        Terapkan
+                      </button>
+                    </div>
+                    {editVoucherMsg && (
+                      <p className={`text-[11px] font-semibold mt-1 ${editDiscountApplied > 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                        {editVoucherMsg}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -1649,7 +1927,7 @@ export default function App() {
                 <div className="p-2.5 bg-[#FAF8F5] rounded-xl border border-gray-200 font-semibold text-gray-700 flex justify-between items-center text-[11px]">
                   <span>Estimasi Total Biaya Baru:</span>
                   <span className="text-[#701A24] font-bold text-xs">
-                    Rp {(Number(editCustomServicePrice) + Number(editAdminFee)).toLocaleString('id-ID')}
+                    Rp {(Math.max(0, Number(editCustomServicePrice) - editDiscountApplied) + Number(editAdminFee)).toLocaleString('id-ID')}
                   </span>
                 </div>
 
@@ -1996,15 +2274,34 @@ export default function App() {
                   </div>
                 )}
 
+                {/* RINCIAN BIAYA DENGAN POTONGAN DISKON & BIAYA ADMIN TERPISAH */}
                 <div className="border-t border-b border-[#EADFD5] py-2 space-y-1 text-xs font-sans">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Biaya Layanan / Sesi:</span>
-                    <span>Rp {Math.max(0, (selectedAppt.price ?? 30000) - (selectedAppt.admin_fee ?? 30000)).toLocaleString('id-ID')}</span>
+                  {/* Biaya Layanan */}
+                  <div className="flex justify-between text-gray-600">
+                    <span>Biaya Layanan / Sesi:</span>
+                    <span>
+                      Rp {(
+                        SERVICE_PRICES[selectedAppt.service_type] || 
+                        ((selectedAppt.price ?? 30000) - (selectedAppt.admin_fee ?? 30000) + (selectedAppt.notes && selectedAppt.notes.includes('OPENING100K') ? 100000 : 0))
+                      ).toLocaleString('id-ID')}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Biaya Administrasi:</span>
+
+                  {/* Potongan Diskon Voucher (Jika Digunakan) */}
+                  {selectedAppt.notes && selectedAppt.notes.includes('OPENING100K') && (
+                    <div className="flex justify-between text-emerald-700 font-bold">
+                      <span>Voucher Diskon (OPENING100K):</span>
+                      <span>- Rp 100.000</span>
+                    </div>
+                  )}
+
+                  {/* Biaya Admin */}
+                  <div className="flex justify-between text-gray-600">
+                    <span>Biaya Administrasi:</span>
                     <span>Rp {(selectedAppt.admin_fee ?? 30000).toLocaleString('id-ID')}</span>
                   </div>
+
+                  {/* Total Akhir */}
                   <div className="flex justify-between font-bold text-sm text-[#701A24] pt-1.5 border-t border-dashed border-[#EADFD5]">
                     <span>TOTAL {selectedAppt.status !== 'lunas' ? 'TAGIHAN' : 'BAYAR'}:</span>
                     <span>Rp {(selectedAppt.price ?? 30000).toLocaleString('id-ID')}</span>
