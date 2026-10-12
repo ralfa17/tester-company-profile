@@ -159,7 +159,7 @@ export default function App() {
   const [directTherapist, setDirectTherapist] = useState('');
   const [directTherapyMethod, setDirectTherapyMethod] = useState('Play and Grow');
   const [bookingDate, setBookingDate] = useState('');
-  const [bookingTime, setBookingTime] = useState('09:00');
+  const [bookingTime, setBookingTime] = useState('');
   
   // State Pilihan Layanan Opsional & Input Harga Manual
   const [serviceTypeInput, setServiceTypeInput] = useState('');
@@ -181,7 +181,7 @@ export default function App() {
   const [editAge, setEditAge] = useState('');
   const [editVisitNumber, setEditVisitNumber] = useState(1);
   const [editBookingDate, setEditBookingDate] = useState('');
-  const [editBookingTime, setEditBookingTime] = useState('09:00');
+  const [editBookingTime, setEditBookingTime] = useState('');
   const [editAdminFee, setEditAdminFee] = useState(30000);
   const [editPsychologist, setEditPsychologist] = useState('');
   const [editTherapist, setEditTherapist] = useState('');
@@ -322,7 +322,7 @@ export default function App() {
           assigned_to: isDirect ? 'Layanan Langsung Terapis' : assignedPsychologist,
           assigned_terapis: selectedTherapist,
           booking_date: bookingDate,
-          booking_time: bookingTime,
+          booking_time: bookingTime || 'Sesuai Janji',
           status: isDirect ? 'dirujuk_terapis' : 'pending',
           service_type: finalServiceType,
           category: finalServiceType,
@@ -341,6 +341,7 @@ export default function App() {
       setPatientPhone('');
       setPatientAge('');
       setVisitNumber(1);
+      setBookingTime('');
       setServiceTypeInput('');
       setCustomServicePrice(0);
     } catch (err) {
@@ -350,16 +351,15 @@ export default function App() {
     }
   };
 
-  // 2. EDIT DATA PENDAFTARAN (FIX: PEMBACAAN AKURAT ADMIN FEE TAHAN RP 0)
+  // 2. EDIT DATA PENDAFTARAN
   const handleOpenEditModal = (item) => {
     setSelectedAppt(item);
     setEditPatientName(item.patient_name || '');
     setEditAge(item.age || 0);
     setEditVisitNumber(item.visit_number || 1);
     setEditBookingDate(item.booking_date || '');
-    setEditBookingTime(item.booking_time || '09:00');
+    setEditBookingTime(item.booking_time || '');
     
-    // PERBAIKAN: Baca admin_fee dengan nullish coalescing agar Rp 0 tidak kembali ke 30.000
     const actualAdminFee = item.admin_fee ?? 30000;
     setEditAdminFee(actualAdminFee);
     setEditPsychologist(item.doctor_name || LIST_PSIKOLOG[0].label);
@@ -383,7 +383,7 @@ export default function App() {
         age: parseInt(editAge) || 0,
         visit_number: parseInt(editVisitNumber) || 1,
         booking_date: editBookingDate,
-        booking_time: editBookingTime,
+        booking_time: editBookingTime || 'Sesuai Janji',
         admin_fee: parsedAdminFee,
         price: newTotalPrice,
         service_type: editServiceType || null,
@@ -515,7 +515,7 @@ export default function App() {
     }
   };
 
-  // KIRIM WA RECEIPT (FIX: PEMBACAAN ADMIN FEE PRESISI)
+  // KIRIM WA RECEIPT
   const sendWaReceipt = () => {
     if (!selectedAppt) return;
     
@@ -533,7 +533,7 @@ export default function App() {
     let msg = `*BENANG MERAH - ${title}*\n`;
     msg += `-------------------------------------------\n`;
     msg += `*Nama Klien/Pasien:* ${selectedAppt.patient_name || 'Klien'}\n`;
-    msg += `*Tanggal Sesi:* ${selectedAppt.booking_date} (${selectedAppt.booking_time})\n`;
+    msg += `*Tanggal Sesi:* ${selectedAppt.booking_date} (${selectedAppt.booking_time || 'Sesuai Janji'})\n`;
     msg += `*Layanan:* ${(selectedAppt.service_type || selectedAppt.category || 'Konseling').toUpperCase()}\n`;
     msg += `*Psikolog PJ:* ${selectedAppt.doctor_name}\n`;
     if (selectedAppt.assigned_terapis) {
@@ -617,7 +617,7 @@ export default function App() {
             </div>
 
             <div style="margin: 12px 0;" class="text-xs">
-              <p style="margin: 3px 0;"><span style="color:#6B7280;">Tanggal & Sesi:</span> ${selectedAppt.booking_date} (${selectedAppt.booking_time})</p>
+              <p style="margin: 3px 0;"><span style="color:#6B7280;">Tanggal & Sesi:</span> ${selectedAppt.booking_date} (${selectedAppt.booking_time || 'Sesuai Janji'})</p>
               <p style="margin: 3px 0;"><span style="color:#6B7280;">Klien / Pasien:</span> <strong>${selectedAppt.patient_name || selectedAppt.notes}</strong></p>
               <p style="margin: 3px 0;"><span style="color:#6B7280;">Layanan:</span> ${(selectedAppt.service_type || selectedAppt.category || 'Terlampir').toUpperCase()}</p>
               <p style="margin: 3px 0;"><span style="color:#6B7280;">Psikolog PJ:</span> ${selectedAppt.doctor_name}</p>
@@ -712,7 +712,7 @@ export default function App() {
             </div>
 
             <div style="margin: 12px 0;" class="text-xs">
-              <p style="margin: 4px 0;"><span style="color:#6B7280;">Tanggal & Sesi:</span> ${selectedAppt.booking_date} (${selectedAppt.booking_time})</p>
+              <p style="margin: 4px 0;"><span style="color:#6B7280;">Tanggal & Sesi:</span> ${selectedAppt.booking_date} (${selectedAppt.booking_time || 'Sesuai Janji'})</p>
               <p style="margin: 4px 0;"><span style="color:#6B7280;">Klien / Pasien:</span> <strong>${selectedAppt.patient_name || selectedAppt.notes}</strong></p>
               <p style="margin: 4px 0;"><span style="color:#6B7280;">Layanan:</span> ${(selectedAppt.service_type || selectedAppt.category || 'Terlampir').toUpperCase()}</p>
               <p style="margin: 4px 0;"><span style="color:#6B7280;">Psikolog PJ:</span> ${selectedAppt.doctor_name}</p>
@@ -1294,17 +1294,14 @@ export default function App() {
                       </div>
                       <div>
                         <label className="block font-medium text-gray-600 mb-1">Jam Sesi</label>
-                        <select
+                        <input
+                          type="text"
+                          required
+                          placeholder="Contoh: 10:30 WIB"
                           value={bookingTime}
                           onChange={(e) => setBookingTime(e.target.value)}
                           className="w-full px-3.5 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#701A24]"
-                        >
-                          <option value="09:00">09:00 WIB</option>
-                          <option value="11:00">11:00 WIB</option>
-                          <option value="14:00">14:00 WIB</option>
-                          <option value="16:00">16:00 WIB</option>
-                          <option value="19:00">19:00 WIB</option>
-                        </select>
+                        />
                       </div>
                     </div>
 
@@ -1428,13 +1425,12 @@ export default function App() {
                           hiddenReason = '[PRIVACY MEDIS]';
                         }
 
-                        // PEMBACAAN BIAYA ADMIN YANG TAHAN DENGAN ANGKA 0
                         const itemAdminFee = item.admin_fee ?? 30000;
 
                         return (
                           <tr key={item.id} className="hover:bg-[#FAF8F5]/60 transition-colors">
                             <td className="p-3">
-                              <p className="font-medium text-gray-800">{item.booking_date} ({item.booking_time})</p>
+                              <p className="font-medium text-gray-800">{item.booking_date} ({item.booking_time || 'Sesuai Janji'})</p>
                               <p className="font-semibold text-gray-900 mt-0.5">{item.patient_name}</p>
                               
                               <div className="flex items-center gap-1 mt-1">
@@ -1594,17 +1590,13 @@ export default function App() {
                   </div>
                   <div>
                     <label className="block font-semibold text-gray-700 mb-1">Jam Sesi</label>
-                    <select
+                    <input
+                      type="text"
+                      placeholder="Contoh: 10:30 WIB"
                       value={editBookingTime}
                       onChange={(e) => setEditBookingTime(e.target.value)}
                       className="w-full p-2.5 border rounded-lg outline-none"
-                    >
-                      <option value="09:00">09:00 WIB</option>
-                      <option value="11:00">11:00 WIB</option>
-                      <option value="14:00">14:00 WIB</option>
-                      <option value="16:00">16:00 WIB</option>
-                      <option value="19:00">19:00 WIB</option>
-                    </select>
+                    />
                   </div>
                 </div>
 
@@ -1978,7 +1970,7 @@ export default function App() {
                 </div>
 
                 <div className="space-y-1 text-[11px] font-sans">
-                  <p><span className="text-gray-500">Tanggal & Sesi:</span> {selectedAppt.booking_date} ({selectedAppt.booking_time})</p>
+                  <p><span className="text-gray-500">Tanggal & Sesi:</span> {selectedAppt.booking_date} ({selectedAppt.booking_time || 'Sesuai Janji'})</p>
                   <p><span className="text-gray-500">Klien / Pasien:</span> <strong className="text-gray-800">{selectedAppt.patient_name || selectedAppt.notes}</strong></p>
                   <p><span className="text-gray-500">Layanan:</span> {(selectedAppt.service_type || selectedAppt.category || 'Terlampir').toUpperCase()}</p>
                   <p><span className="text-gray-500">Psikolog PJ:</span> {selectedAppt.doctor_name}</p>
@@ -2004,7 +1996,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* TOTAL BIAYA (DENGAN PENANGANAN LENGKAP ANGKA 0) */}
                 <div className="border-t border-b border-[#EADFD5] py-2 space-y-1 text-xs font-sans">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Biaya Layanan / Sesi:</span>
